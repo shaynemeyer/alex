@@ -1,0 +1,13 @@
+# Part 7: Frontend & API Configuration
+
+# AWS region for deployment
+aws_region = "us-east-1"
+
+# Supabase configuration (same values as Part 6)
+supabase_url              = "https://xxxx.supabase.co"
+supabase_service_role_key = "eyJ..."
+
+# Clerk configuration for JWT validation
+# Get these from your Clerk dashboard
+clerk_jwks_url = "https://[your-instance].clerk.accounts.dev/.well-known/jwks.json"
+clerk_issuer   = "https://[your-instance].clerk.accounts.dev"
