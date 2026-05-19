@@ -16,3 +16,9 @@
 2. **frontend** - a NextJS React frontend integrated with Clerk
 3. **terraform** - separate terraform subdirectories with state for each part
 4. **scripts** - the final deployment script
+
+---
+
+## Notes
+
+This work is based on the amazing work of Ed Donner and his amazing Udemy Course - <https://www.udemy.com/course/generative-and-agentic-ai-in-production>
