@@ -31,9 +31,8 @@
 
 - All configuration flows from `terraform.tfvars` → Lambda environment variables → Python `os.getenv(...)`. No hardcoded ARNs, regions, or bucket names in code.
 - Use `os.getenv("KEY", "default")` at the point of use; centralise defaults in one place per agent (`create_agent` or top of `lambda_handler`).
-- Lambda packages must be built with Docker targeting `linux/amd64`. Use `package_docker.py` — never build locally and upload directly.
+- Lambda packages must be built with Podman targeting `linux/amd64`. Use `package_docker.py` — never build locally and upload directly.
 - Each terraform directory is independent with its own local state. Do not share state between directories.
-- Destroy Aurora Serverless v2 when not actively developing (highest ongoing cost).
 
 ## Testing
 

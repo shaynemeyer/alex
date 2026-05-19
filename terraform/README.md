@@ -6,13 +6,12 @@ This directory contains Terraform configurations for the Alex Financial Planner 
 
 Each part of the course has its own independent Terraform directory:
 
-- **`2_sagemaker/`** - SageMaker serverless endpoint for embeddings (Guide 2)
-- **`3_ingestion/`** - S3 Vectors, Lambda, and API Gateway for document ingestion (Guide 3)
-- **`4_researcher/`** - App Runner service for AI researcher agent (Guide 4)
-- **`5_database/`** - Aurora Serverless v2 PostgreSQL with Data API (Guide 5)
-- **`6_agents/`** - Lambda functions for agent orchestra (Guide 6)
-- **`7_frontend/`** - API Lambda and frontend infrastructure (Guide 7)
-- **`8_observability/`** - LangFuse and monitoring setup (Guide 8)
+- **`2_sagemaker/`** - SageMaker serverless endpoint for embeddings
+- **`3_ingestion/`** - S3 Vectors, Lambda, and API Gateway for document ingestion
+- **`4_researcher/`** - App Runner service for AI researcher agent
+- **`6_agents/`** - Lambda functions for agent orchestra
+- **`7_frontend/`** - API Lambda and frontend infrastructure
+- **`8_observability/`** - LangFuse and monitoring setup
 
 ## Key Design Decisions
 
@@ -58,8 +57,8 @@ Some Terraform configurations require environment variables from your `.env` fil
 - `OPENAI_API_KEY` - For the researcher agent (Part 4)
 - `ALEX_API_ENDPOINT` - API Gateway endpoint (from Part 3)
 - `ALEX_API_KEY` - API key for ingestion (from Part 3)
-- `AURORA_CLUSTER_ARN` - Aurora cluster ARN (from Part 5)
-- `AURORA_SECRET_ARN` - Secrets Manager ARN (from Part 5)
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_KEY` - Supabase service role key
 - `VECTOR_BUCKET` - S3 Vectors bucket name (from Part 3)
 - `BEDROCK_MODEL_ID` - Bedrock model to use (Part 6)
 
@@ -85,6 +84,7 @@ This structure is optimized for learning. In production, you might consider:
 If you encounter issues:
 
 1. **State Conflicts**: Each directory has independent state. If you need to import existing resources:
+
    ```bash
    terraform import <resource_type>.<resource_name> <resource_id>
    ```
@@ -92,6 +92,7 @@ If you encounter issues:
 2. **Missing Dependencies**: Ensure you've completed earlier guides and have the required environment variables
 
 3. **Clean Slate**: To start over in any directory:
+
    ```bash
    terraform destroy  # Remove resources
    rm -rf .terraform terraform.tfstate*  # Clean local files

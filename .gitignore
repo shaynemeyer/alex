@@ -228,6 +228,4 @@ lambda_function.zip
 # ignore all Lambda zips:
 backend/**/*_lambda.zip
 
-# But do include the scheduler
-!backend/scheduler/lambda_function.zip
 !frontend/lib

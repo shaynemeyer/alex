@@ -11,7 +11,7 @@ Alex (Agentic Learning Equities eXplainer) is a multi-agent enterprise-grade Saa
 3. Continuously gather and index market research to enrich agent analysis.
 4. Classify financial instruments automatically so portfolio data is always enriched.
 5. Deploy a production-grade multi-agent system on AWS serverless infrastructure.
-6. Keep infrastructure costs low through S3 Vectors (90% cheaper than OpenSearch) and Aurora Serverless v2.
+6. Keep infrastructure costs low through S3 Vectors (90% cheaper than OpenSearch) and Supabase (free tier).
 
 ## Core User Flow
 
@@ -48,7 +48,7 @@ Alex (Agentic Learning Equities eXplainer) is a multi-agent enterprise-grade Saa
 
 - Serverless compute: Lambda (agents, ingest, API backend) and App Runner (researcher).
 - Vector storage: S3 Vectors with SageMaker Serverless embeddings (all-MiniLM-L6-v2).
-- Relational storage: Aurora Serverless v2 PostgreSQL with Data API.
+- Relational storage: Supabase (PostgreSQL).
 - CDN and API: CloudFront + S3 (frontend), API Gateway + Lambda (backend API).
 - Observability: CloudWatch dashboards, alarms, and LangFuse tracing.
 
@@ -62,7 +62,7 @@ Alex (Agentic Learning Equities eXplainer) is a multi-agent enterprise-grade Saa
 - On-demand multi-agent portfolio analysis (reports, charts, retirement projections)
 - Autonomous background research and vector knowledge base
 - S3 Vectors similarity search for context retrieval
-- Aurora Serverless v2 for relational data
+- Supabase for relational data
 - Full-stack deployment: NextJS frontend, FastAPI backend, Lambda agents
 - CloudWatch monitoring and LangFuse observability
 - Enterprise hardening: WAF, VPC endpoints, GuardDuty, guardrails

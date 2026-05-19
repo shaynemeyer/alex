@@ -23,12 +23,12 @@
 
 - `backend/planner/` — Orchestrator Lambda: receives SQS events, coordinates all specialist agents, retrieves vector context.
 - `backend/tagger/` — Instrument classification Lambda: uses Structured Outputs to enrich unknown ETF/equity symbols.
-- `backend/reporter/` — Report Writer Lambda: generates markdown portfolio narratives and stores them in Aurora.
+- `backend/reporter/` — Report Writer Lambda: generates markdown portfolio narratives and stores them in Supabase.
 - `backend/charter/` — Chart Maker Lambda: produces Recharts-compatible JSON for portfolio visualizations.
 - `backend/retirement/` — Retirement Specialist Lambda: runs Monte Carlo projections and stores income charts.
 - `backend/researcher/` — Autonomous research agent on App Runner: browses the web via Playwright MCP, stores insights in S3 Vectors.
 - `backend/ingest/` — Ingestion Lambda: receives documents via API Gateway, generates embeddings via SageMaker, stores vectors in S3 Vectors.
-- `backend/database/` — Shared database library (Pydantic models + Aurora Data API helpers) used by all agents.
+- `backend/database/` — Shared database library (Pydantic models + Supabase client helpers) used by all agents.
 - `backend/api/` — FastAPI Lambda: REST backend for the Next.js frontend (portfolio CRUD, job status, reports).
 - `frontend/pages/` — Next.js page routes: dashboard, portfolio management, analysis results.
 - `frontend/components/` — UI components: charts, report viewers, portfolio tables.
@@ -57,7 +57,7 @@
 User Request → SQS Queue → Financial Planner (Orchestrator)
                                 ├─→ InstrumentTagger (if unknown symbols)
                                 ├─→ Report Writer  ─┐
-                                ├─→ Chart Maker    ─┼─→ Aurora (results)
+                                ├─→ Chart Maker    ─┼─→ Supabase (results)
                                 └─→ Retirement     ─┘
 
 EventBridge (every 2hrs) → Researcher → S3 Vectors (knowledge base)
@@ -82,8 +82,8 @@ Financial Planner → S3 Vectors (retrieve research context)
 
 - Each `terraform/N_name/` directory is independent with its own state and `terraform.tfvars`.
 - `terraform.tfvars` must be configured (copied from `.tfvars.example`) before `terraform apply`.
-- Lambda packages requiring native dependencies are built with Docker/Podman targeting `linux/amd64`.
-- `backend/package_docker.py` handles packaging; Docker/Podman must be running before executing it.
+- Lambda packages requiring native dependencies are built with Podman targeting `linux/amd64`.
+- `backend/package_docker.py` handles packaging; Podman must be running before executing it.
 - The root `.env` file accumulates ARNs and endpoints across guides as infrastructure is deployed.
 
 ## Invariants
