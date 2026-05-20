@@ -3,7 +3,7 @@
 
 # Your AWS region for the ingestion infrastructure
 # Should match your DEFAULT_AWS_REGION from .env
-aws_region = "us-east-1"
+aws_region = "us-west-2"
 
 # SageMaker endpoint name from Part 2
 # This should be "alex-embedding-endpoint" if you didn't change it

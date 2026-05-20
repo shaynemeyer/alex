@@ -1,7 +1,7 @@
 # Part 7: Frontend & API Configuration
 
 # AWS region for deployment
-aws_region = "us-east-1"
+aws_region = "us-west-2"
 
 # Supabase configuration (same values as Part 6)
 supabase_url              = "https://xxxx.supabase.co"

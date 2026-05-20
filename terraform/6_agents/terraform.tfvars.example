@@ -2,7 +2,7 @@
 # Copy this file to terraform.tfvars and update with your values
 
 # Your AWS region for Lambda functions
-aws_region = "us-east-1"
+aws_region = "us-west-2"
 
 # Supabase configuration (from Part 5 — Supabase dashboard > Settings > API)
 supabase_url              = "https://xxxx.supabase.co"
