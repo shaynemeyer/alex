@@ -106,25 +106,32 @@ graph TB
 
 ## Data Flow
 
-1. **Manual Research Flow**:
-   ```
-   User → Lambda (alex-researcher) → Bedrock (generate) → API Gateway → Lambda (alex-ingest) → S3 Vectors
-   ```
+```mermaid
+flowchart TD
+    User([User])
+    EB[EventBridge every 2 hrs]
+    SCH[Lambda alex-scheduler]
+    RES[Lambda alex-researcher]
+    BED[AWS Bedrock]
+    APIGW[API Gateway REST API]
+    ING[Lambda alex-ingest]
+    SM[SageMaker all-MiniLM-L6-v2]
+    S3V[(S3 Vectors)]
 
-2. **Automated Research Flow**:
-   ```
-   EventBridge (every 2hrs) → Lambda Scheduler → Lambda (alex-researcher) → Bedrock → API Gateway → Lambda (alex-ingest) → S3 Vectors
-   ```
+    User -->|"1 Manual: POST /research"| RES
+    EB -->|"2 Automated: every 2 hrs"| SCH
+    SCH --> RES
+    RES -->|generate| BED
+    RES -->|POST /ingest| APIGW
 
-3. **Direct Ingest Flow**:
-   ```
-   User → API Gateway → Lambda → SageMaker (embed) → S3 Vectors
-   ```
+    User -->|"3 Direct: POST /ingest"| APIGW
+    APIGW --> ING
+    ING -->|embed text| SM
+    SM --> ING
+    ING -->|store vector| S3V
 
-4. **Search Flow** (future):
-   ```
-   User → API Gateway → Lambda → S3 Vectors (similarity search)
-   ```
+    User -->|"4 Search future: GET /search"| APIGW
+```
 
 ## Cost Optimization
 

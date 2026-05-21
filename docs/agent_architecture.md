@@ -222,32 +222,49 @@ The agents leverage two primary knowledge sources:
 
 ### 1. Data Enrichment Pattern
 
-```
-Unknown Instrument → InstrumentTagger → Enriched Data → Other Agents
+```mermaid
+flowchart LR
+    UI[Unknown Instrument] --> IT[InstrumentTagger]
+    IT --> DB[(Database)]
+    DB --> OA[Other Agents]
 ```
 
 ### 2. Independent Research Pattern
 
-```
-EventBridge (Every 2hrs) → Researcher → S3 Vectors → Knowledge Base Growth
+```mermaid
+flowchart LR
+    EB[EventBridge every 2 hrs] --> RE[Researcher]
+    RE --> S3[(S3 Vectors Knowledge Base)]
 ```
 
 ### 3. Knowledge Integration Pattern
 
-```
-Financial Planner → Retrieve from S3 Vectors → Contextual Analysis
+```mermaid
+flowchart LR
+    FP[Financial Planner] -->|similarity search| S3[(S3 Vectors)]
+    S3 -->|relevant insights| FP
+    FP --> CA[Contextual Analysis]
 ```
 
 ### 4. Parallel Processing Pattern
 
-```
-Financial Planner → [Report Writer, Chart Maker, Retirement] → Compiled Results
+```mermaid
+flowchart LR
+    FP[Financial Planner] --> RW[Report Writer]
+    FP --> CM[Chart Maker]
+    FP --> RS[Retirement Specialist]
+    RW --> CR[Compiled Results]
+    CM --> CR
+    RS --> CR
 ```
 
 ### 5. Continuous Learning Pattern
 
-```
-Researcher (Autonomous) → Accumulating Knowledge → Better Analysis Over Time
+```mermaid
+flowchart LR
+    RE[Researcher autonomous] -->|stores insights| S3[(S3 Vectors)]
+    S3 -->|growing knowledge base| FP[Financial Planner]
+    FP -->|better analysis| UA[User Analysis]
 ```
 
 ## Key Design Principles

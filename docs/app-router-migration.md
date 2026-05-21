@@ -14,6 +14,45 @@ The frontend currently uses Next.js Pages Router. The original reason ("required
 
 ## File Mapping
 
+```mermaid
+flowchart LR
+    subgraph before["Pages Router (before)"]
+        A1[pages/_app.tsx]
+        A2[pages/_document.tsx]
+        A3[pages/index.tsx]
+        A4[pages/dashboard.tsx]
+        A5[pages/accounts.tsx]
+        A6["pages/accounts/[id].tsx"]
+        A7[pages/advisor-team.tsx]
+        A8[pages/analysis.tsx]
+        A9[pages/404.tsx]
+        A10[pages/500.tsx]
+    end
+
+    subgraph after["App Router (after)"]
+        B1[app/layout.tsx]
+        B2[app/page.tsx]
+        B3[app/dashboard/page.tsx]
+        B4[app/accounts/page.tsx]
+        B5["app/accounts/[id]/page.tsx"]
+        B6[app/advisor-team/page.tsx]
+        B7[app/analysis/page.tsx]
+        B8[app/not-found.tsx]
+        B9[app/error.tsx]
+    end
+
+    A1 -->|root layout| B1
+    A2 -->|metadata merged into| B1
+    A3 --> B2
+    A4 --> B3
+    A5 --> B4
+    A6 --> B5
+    A7 --> B6
+    A8 --> B7
+    A9 --> B8
+    A10 --> B9
+```
+
 | Pages Router              | App Router                     |
 | ------------------------- | ------------------------------ |
 | `pages/_app.tsx`          | `app/layout.tsx` (root layout) |
@@ -30,6 +69,17 @@ The frontend currently uses Next.js Pages Router. The original reason ("required
 ---
 
 ## Steps
+
+### Component hierarchy
+
+```mermaid
+flowchart TD
+    LT["app/layout.tsx (html · body · metadata)"]
+    PR["Providers: ClerkProvider · ToastContainer · ErrorBoundary"]
+    PG["page.tsx · dashboard/page.tsx · accounts/page.tsx · etc. — use client"]
+
+    LT --> PR --> PG
+```
 
 ### 1. Create `app/layout.tsx`
 

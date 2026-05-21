@@ -159,11 +159,52 @@ uv run test_research.py "NVIDIA AI chip market share"
 
 ## Architecture Diagram (Updated)
 
-```ascii
-User ──────────────────────────────► Lambda Function URL
-                                          │
-Schedule[EventBridge] ──► Lambda       Lambda
-                          Scheduler ──► Researcher ──► Bedrock (Nova Pro)
-                                          │
-                                          └──► API Gateway ──► Lambda Ingest ──► S3 Vectors
+```mermaid
+flowchart TD
+    User([HTTP Client])
+    EB[EventBridge Schedule]
+    SCH[Lambda Scheduler]
+    RES[Lambda Researcher]
+    BED[AWS Bedrock Nova Pro]
+    APIGW[API Gateway /ingest]
+    ING[Lambda Ingest]
+    S3V[(S3 Vectors)]
+    FU[Lambda Function URL]
+
+    User -->|HTTPS| FU
+    FU --> RES
+    EB -->|every 2 hrs| SCH
+    SCH -->|async invoke| RES
+    RES -->|LiteLLM| BED
+    RES -->|POST + API key| APIGW
+    APIGW --> ING
+    ING --> S3V
+```
+
+## Deployment Sequence
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant TF as Terraform
+    participant ECR as ECR
+    participant Lambda as Lambda
+
+    Note over Dev,Lambda: Step 1 — first time only
+    Dev->>TF: terraform apply -target=aws_ecr_repository<br/>-target=aws_iam_role.researcher_lambda_role
+    TF-->>Dev: ECR URL + IAM role ARN
+
+    Note over Dev,Lambda: Step 2 — build and push image
+    Dev->>ECR: podman build --platform linux/amd64
+    Dev->>ECR: podman push (timestamped + latest tag)
+    Dev->>Lambda: aws lambda update-function-code --image-uri
+    Lambda-->>Dev: poll until LastUpdateStatus = Successful
+
+    Note over Dev,Lambda: Step 3 — deploy function + URL
+    Dev->>TF: terraform apply
+    TF-->>Dev: researcher_function_url
+
+    Note over Dev,Lambda: Step 4 — verify
+    Dev->>Lambda: uv run test_research.py
+    Lambda-->>Dev: research output
 ```

@@ -200,7 +200,7 @@ resource "aws_lambda_function" "scheduler_lambda" {
 
   environment {
     variables = {
-      APP_RUNNER_URL = trimsuffix(aws_lambda_function_url.researcher[0].function_url, "/")
+      RESEARCHER_FUNCTION_NAME = aws_lambda_function.researcher[0].function_name
     }
   }
 
@@ -239,6 +239,24 @@ resource "aws_iam_role_policy_attachment" "lambda_scheduler_basic" {
   count      = local.scheduler_active ? 1 : 0
   role       = aws_iam_role.lambda_scheduler_role[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# Policy for scheduler Lambda to invoke the researcher Lambda
+resource "aws_iam_role_policy" "lambda_scheduler_invoke_researcher" {
+  count = local.scheduler_active ? 1 : 0
+  name  = "InvokeResearcherPolicy"
+  role  = aws_iam_role.lambda_scheduler_role[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunction"]
+        Resource = aws_lambda_function.researcher[0].arn
+      }
+    ]
+  })
 }
 
 # EventBridge schedule
