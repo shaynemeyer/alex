@@ -69,7 +69,7 @@ Alex (Agentic Learning Equities eXplainer) is a multi-agent enterprise-grade Saa
 
 ### Out of Scope
 
-- Real-time market data feeds (Polygon API integration is future work)
+- Real-time market data feeds (Massive API integration is future work)
 - Options strategy analysis
 - Tax optimization agent
 - Portfolio rebalancing agent

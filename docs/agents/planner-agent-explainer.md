@@ -8,7 +8,7 @@ The Planner is the **orchestrator** for Alex's multi-agent portfolio analysis pi
 
 1. Receives a `job_id` from an SQS queue (or direct Lambda invocation)
 2. Tags any unclassified portfolio instruments via the Tagger Lambda
-3. Refreshes current market prices via polygon.io
+3. Refreshes current market prices via massive.com
 4. Runs the orchestrator agent (LLM on Bedrock) which decides which downstream agents to call
 5. Updates the job status in Aurora (running → completed or failed)
 
@@ -51,10 +51,10 @@ flowchart TD
 
 Two invocation modes are supported:
 
-| Mode | Trigger | `job_id` source |
-|---|---|---|
-| SQS | Queue message | `event['Records'][0]['body']` |
-| Direct | Lambda console / test | `event['job_id']` |
+| Mode   | Trigger               | `job_id` source               |
+| ------ | --------------------- | ----------------------------- |
+| SQS    | Queue message         | `event['Records'][0]['body']` |
+| Direct | Lambda console / test | `event['job_id']`             |
 
 ---
 
@@ -97,12 +97,12 @@ This is a direct `boto3` `invoke` call (not an agent tool), so it always happens
 
 ## Pre-processing: price refresh
 
-[market.py `update_instrument_prices`](../../backend/planner/market.py) fetches current prices for every symbol in the user's portfolio using the polygon.io API, then writes updated prices back to the `instruments` table in Aurora.
+[market.py `update_instrument_prices`](../../backend/planner/market.py) fetches current prices for every symbol in the user's portfolio using the massive.com API, then writes updated prices back to the `instruments` table in Aurora.
 
 ```mermaid
 flowchart TD
     SYMS[Collect unique symbols from positions] --> FETCH[get_share_price per symbol]
-    FETCH --> POLY{polygon API key set?}
+    FETCH --> POLY{massive API key set?}
     POLY -->|yes, paid plan| MIN[get_snapshot_ticker - minute data]
     POLY -->|yes, free plan| EOD[get_grouped_daily_aggs - previous close]
     POLY -->|no key| RAND[random fallback price]
@@ -111,7 +111,7 @@ flowchart TD
     RAND --> UPD
 ```
 
-Price fetching is non-critical: errors are logged and skipped so the pipeline continues even if polygon.io is unavailable.
+Price fetching is non-critical: errors are logged and skipped so the pipeline continues even if massive.com is unavailable.
 
 ---
 
@@ -119,11 +119,11 @@ Price fetching is non-critical: errors are logged and skipped so the pipeline co
 
 The LLM agent in [agent.py](../../backend/planner/agent.py) has exactly three `@function_tool` callables. Each wraps an async Lambda invocation and returns a status string to the model.
 
-| Tool | Lambda | Purpose |
-|---|---|---|
-| `invoke_reporter` | `alex-reporter` | Generate portfolio analysis narrative |
-| `invoke_charter` | `alex-charter` | Create portfolio visualisation charts |
-| `invoke_retirement` | `alex-retirement` | Calculate retirement projections |
+| Tool                | Lambda            | Purpose                               |
+| ------------------- | ----------------- | ------------------------------------- |
+| `invoke_reporter`   | `alex-reporter`   | Generate portfolio analysis narrative |
+| `invoke_charter`    | `alex-charter`    | Create portfolio visualisation charts |
+| `invoke_retirement` | `alex-retirement` | Calculate retirement projections      |
 
 ```mermaid
 flowchart LR
@@ -184,12 +184,12 @@ flowchart TD
 
 `run_orchestrator` is wrapped with `tenacity` retry logic targeting `RateLimitError` from LiteLLM:
 
-| Parameter | Value |
-|---|---|
-| Max attempts | 5 |
-| Min wait | 4 s |
-| Max wait | 60 s |
-| Backoff | Exponential |
+| Parameter    | Value       |
+| ------------ | ----------- |
+| Max attempts | 5           |
+| Min wait     | 4 s         |
+| Max wait     | 60 s        |
+| Backoff      | Exponential |
 
 Bedrock Nova Pro is the preferred model precisely to avoid the stricter rate limits on Claude Sonnet.
 
@@ -231,39 +231,39 @@ model = LitellmModel(model=f"bedrock/{model_id}")
 
 `AWS_REGION_NAME` is set explicitly from `BEDROCK_REGION` before creating the model — LiteLLM requires this specific env var name (not `AWS_REGION` or `DEFAULT_AWS_REGION`).
 
-| Env var | Default | Purpose |
-|---|---|---|
-| `BEDROCK_MODEL_ID` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` | LLM for orchestration decisions |
-| `BEDROCK_REGION` | `us-west-2` | Written to `AWS_REGION_NAME` for LiteLLM |
-| `TAGGER_FUNCTION` | `alex-tagger` | Tagger Lambda function name |
-| `REPORTER_FUNCTION` | `alex-reporter` | Reporter Lambda function name |
-| `CHARTER_FUNCTION` | `alex-charter` | Charter Lambda function name |
-| `RETIREMENT_FUNCTION` | `alex-retirement` | Retirement Lambda function name |
-| `MOCK_LAMBDAS` | `false` | Skip real Lambda calls for local testing |
-| `POLYGON_API_KEY` | _(optional)_ | polygon.io key for live prices |
-| `POLYGON_PLAN` | _(optional)_ | Set to `paid` for minute-level data |
-| `LANGFUSE_SECRET_KEY` | _(optional)_ | Enables LangFuse tracing |
+| Env var               | Default                                        | Purpose                                  |
+| --------------------- | ---------------------------------------------- | ---------------------------------------- |
+| `BEDROCK_MODEL_ID`    | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` | LLM for orchestration decisions          |
+| `BEDROCK_REGION`      | `us-west-2`                                    | Written to `AWS_REGION_NAME` for LiteLLM |
+| `TAGGER_FUNCTION`     | `alex-tagger`                                  | Tagger Lambda function name              |
+| `REPORTER_FUNCTION`   | `alex-reporter`                                | Reporter Lambda function name            |
+| `CHARTER_FUNCTION`    | `alex-charter`                                 | Charter Lambda function name             |
+| `RETIREMENT_FUNCTION` | `alex-retirement`                              | Retirement Lambda function name          |
+| `MOCK_LAMBDAS`        | `false`                                        | Skip real Lambda calls for local testing |
+| `MASSIVE_API_KEY`     | _(optional)_                                   | massive.com key for live prices          |
+| `MASSIVE_PLAN`        | _(optional)_                                   | Set to `paid` for minute-level data      |
+| `LANGFUSE_SECRET_KEY` | _(optional)_                                   | Enables LangFuse tracing                 |
 
 ---
 
 ## Key files
 
-| File | Role |
-|---|---|
-| [lambda_handler.py](../../backend/planner/lambda_handler.py) | Lambda entry point, SQS parsing, retry wrapper, job status management |
-| [agent.py](../../backend/planner/agent.py) | Agent creation, tool definitions, Lambda invocation, pre-processing helpers |
-| [templates.py](../../backend/planner/templates.py) | Orchestrator system prompt |
-| [market.py](../../backend/planner/market.py) | Price refresh via polygon.io |
-| [prices.py](../../backend/planner/prices.py) | polygon.io REST client wrappers (EOD and minute-level) |
-| [observability.py](../../backend/planner/observability.py) | LangFuse tracing context manager |
-| [test_simple.py](../../backend/planner/test_simple.py) | Local test with `MOCK_LAMBDAS=true` |
-| [test_full.py](../../backend/planner/test_full.py) | End-to-end test against deployed AWS resources |
+| File                                                         | Role                                                                        |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| [lambda_handler.py](../../backend/planner/lambda_handler.py) | Lambda entry point, SQS parsing, retry wrapper, job status management       |
+| [agent.py](../../backend/planner/agent.py)                   | Agent creation, tool definitions, Lambda invocation, pre-processing helpers |
+| [templates.py](../../backend/planner/templates.py)           | Orchestrator system prompt                                                  |
+| [market.py](../../backend/planner/market.py)                 | Price refresh via massive.com                                               |
+| [prices.py](../../backend/planner/prices.py)                 | massive.com REST client wrappers (EOD and minute-level)                     |
+| [observability.py](../../backend/planner/observability.py)   | LangFuse tracing context manager                                            |
+| [test_simple.py](../../backend/planner/test_simple.py)       | Local test with `MOCK_LAMBDAS=true`                                         |
+| [test_full.py](../../backend/planner/test_full.py)           | End-to-end test against deployed AWS resources                              |
 
 ---
 
 ## Notable design decisions
 
-- **Orchestrator-only LLM** — The Planner LLM makes no analytical decisions; it only decides *which* of the three tools to call based on simple conditions (position count, retirement data). All analysis is delegated to specialist agents.
+- **Orchestrator-only LLM** — The Planner LLM makes no analytical decisions; it only decides _which_ of the three tools to call based on simple conditions (position count, retirement data). All analysis is delegated to specialist agents.
 - **Pre-processing outside the LLM** — Tagging and price refresh happen as plain Python before the agent runs, keeping the tool surface minimal and avoiding non-determinism in data preparation.
 - **Context passed via `PlannerContext`** — Tools receive `job_id` from `RunContextWrapper`, not from LLM-generated arguments. This prevents the model from hallucinating or corrupting the job identifier.
 - **`MOCK_LAMBDAS` flag** — Allows full local testing of the orchestration logic without any AWS infrastructure. Set `MOCK_LAMBDAS=true` and all downstream Lambda calls return a canned success response.

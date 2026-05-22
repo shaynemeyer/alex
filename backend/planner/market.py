@@ -1,5 +1,5 @@
 """
-Market data functions using polygon.io for fetching real-time prices.
+Market data functions using massive.com for fetching real-time prices.
 """
 
 import logging
@@ -11,7 +11,7 @@ logger = logging.getLogger()
 
 def update_instrument_prices(job_id: str, db) -> None:
     """
-    Fetch current prices for all instruments in the user's portfolio using polygon.io.
+    Fetch current prices for all instruments in the user's portfolio using massive.com.
     Updates the instruments table with current prices.
 
     Args:
@@ -27,16 +27,16 @@ def update_instrument_prices(job_id: str, db) -> None:
             logger.error(f"Market: Job {job_id} not found")
             return
 
-        user_id = job['clerk_user_id']
+        user_id = job["clerk_user_id"]
 
         # Get all unique symbols from user's positions
         accounts = db.accounts.find_by_user(user_id)
         symbols = set()
 
         for account in accounts:
-            positions = db.positions.find_by_account(account['id'])
+            positions = db.positions.find_by_account(account["id"])
             for position in positions:
-                symbols.add(position['symbol'])
+                symbols.add(position["symbol"])
 
         if not symbols:
             logger.info("Market: No symbols to update prices for")
@@ -56,7 +56,7 @@ def update_instrument_prices(job_id: str, db) -> None:
 
 def update_prices_for_symbols(symbols: Set[str], db) -> None:
     """
-    Fetch and update prices for a set of symbols using polygon.io.
+    Fetch and update prices for a set of symbols using massive.com.
 
     Args:
         symbols: Set of ticker symbols to update
@@ -69,7 +69,7 @@ def update_prices_for_symbols(symbols: Set[str], db) -> None:
     symbols_list = list(symbols)
     price_map = {}
 
-    # Fetch price for each symbol using polygon.io
+    # Fetch price for each symbol using massive.com
     for symbol in symbols_list:
         try:
             price = get_share_price(symbol)
@@ -81,19 +81,18 @@ def update_prices_for_symbols(symbols: Set[str], db) -> None:
         except Exception as e:
             logger.warning(f"Market: Could not fetch price for {symbol}: {e}")
 
-    logger.info(f"Market: Retrieved prices for {len(price_map)}/{len(symbols_list)} symbols")
+    logger.info(
+        f"Market: Retrieved prices for {len(price_map)}/{len(symbols_list)} symbols"
+    )
 
     # Update database with fetched prices
     for symbol, price in price_map.items():
         try:
             instrument = db.instruments.find_by_symbol(symbol)
             if instrument:
-                update_data = {'current_price': price}
+                update_data = {"current_price": price}
                 success = db.client.update(
-                    'instruments',
-                    update_data,
-                    "symbol = :symbol",
-                    {'symbol': symbol}
+                    "instruments", update_data, "symbol = :symbol", {"symbol": symbol}
                 )
                 if success:
                     logger.info(f"Market: Updated {symbol} price to ${price:.2f}")
@@ -125,13 +124,11 @@ def get_all_portfolio_symbols(db) -> Set[str]:
 
     try:
         # Get all positions (this might need pagination for large datasets)
-        all_positions = db.db.execute(
-            "SELECT DISTINCT symbol FROM positions"
-        )
+        all_positions = db.db.execute("SELECT DISTINCT symbol FROM positions")
 
         for position in all_positions:
-            if position['symbol']:
-                symbols.add(position['symbol'])
+            if position["symbol"]:
+                symbols.add(position["symbol"])
 
     except Exception as e:
         logger.error(f"Market: Error fetching all symbols: {e}")

@@ -164,12 +164,12 @@ flowchart TD
 
 Rate limit handling uses `tenacity`:
 
-| Parameter | Value |
-|---|---|
-| Retry condition | `RateLimitError` only |
-| Max attempts | 5 |
-| Backoff | Exponential, 4s min, 60s max |
-| On each sleep | Log the wait time |
+| Parameter       | Value                        |
+| --------------- | ---------------------------- |
+| Retry condition | `RateLimitError` only        |
+| Max attempts    | 5                            |
+| Backoff         | Exponential, 4s min, 60s max |
+| On each sleep   | Log the wait time            |
 
 Non-rate-limit errors propagate immediately and are caught by the per-instrument try/except in `tag_instruments`, which logs the failure and appends `None` (later filtered out).
 
@@ -189,21 +189,21 @@ The agent has `tools=[]` — no tool calls, pure structured output. This is inte
 
 ## Key dependencies
 
-| Package | Role |
-|---|---|
-| `openai-agents[litellm]` | Agent runner + LiteLLM Bedrock bridge |
-| `pydantic` | Structured output validation |
-| `tenacity` | Retry with exponential backoff |
-| `alex-database` | Shared Supabase database client (editable local dep) |
-| `langfuse` + `logfire` | Optional trace export |
+| Package                  | Role                                                 |
+| ------------------------ | ---------------------------------------------------- |
+| `openai-agents[litellm]` | Agent runner + LiteLLM Bedrock bridge                |
+| `pydantic`               | Structured output validation                         |
+| `tenacity`               | Retry with exponential backoff                       |
+| `alex-database`          | Shared Supabase database client (editable local dep) |
+| `langfuse` + `logfire`   | Optional trace export                                |
 
 Model is configured via environment variables:
 
-| Env var | Default |
-|---|---|
-| `BEDROCK_MODEL_ID` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` |
-| `BEDROCK_REGION` | `us-west-2` |
-| `AWS_REGION_NAME` | Set at runtime to match `BEDROCK_REGION` (required by LiteLLM) |
+| Env var            | Default                                                        |
+| ------------------ | -------------------------------------------------------------- |
+| `BEDROCK_MODEL_ID` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0`                 |
+| `BEDROCK_REGION`   | `us-west-2`                                                    |
+| `AWS_REGION_NAME`  | Set at runtime to match `BEDROCK_REGION` (required by LiteLLM) |
 
 ---
 
