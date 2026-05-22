@@ -217,7 +217,7 @@ resource "aws_lambda_function" "planner" {
   environment {
     variables = {
       SUPABASE_URL              = var.supabase_url
-      SUPABASE_SERVICE_KEY      = var.supabase_service_role_key
+      SUPABASE_SERVICE_KEY      = var.supabase_service_key
       VECTOR_BUCKET      = var.vector_bucket
       BEDROCK_MODEL_ID   = var.bedrock_model_id
       BEDROCK_REGION     = var.bedrock_region
@@ -267,7 +267,7 @@ resource "aws_lambda_function" "tagger" {
   environment {
     variables = {
       SUPABASE_URL              = var.supabase_url
-      SUPABASE_SERVICE_KEY      = var.supabase_service_role_key
+      SUPABASE_SERVICE_KEY      = var.supabase_service_key
       BEDROCK_MODEL_ID   = var.bedrock_model_id
       BEDROCK_REGION     = var.bedrock_region
       DEFAULT_AWS_REGION = var.aws_region
@@ -306,7 +306,7 @@ resource "aws_lambda_function" "reporter" {
   environment {
     variables = {
       SUPABASE_URL              = var.supabase_url
-      SUPABASE_SERVICE_KEY      = var.supabase_service_role_key
+      SUPABASE_SERVICE_KEY      = var.supabase_service_key
       BEDROCK_MODEL_ID   = var.bedrock_model_id
       BEDROCK_REGION     = var.bedrock_region
       DEFAULT_AWS_REGION = var.aws_region
@@ -346,7 +346,7 @@ resource "aws_lambda_function" "charter" {
   environment {
     variables = {
       SUPABASE_URL              = var.supabase_url
-      SUPABASE_SERVICE_KEY      = var.supabase_service_role_key
+      SUPABASE_SERVICE_KEY      = var.supabase_service_key
       BEDROCK_MODEL_ID   = var.bedrock_model_id
       BEDROCK_REGION     = var.bedrock_region
       DEFAULT_AWS_REGION = var.aws_region
@@ -385,7 +385,7 @@ resource "aws_lambda_function" "retirement" {
   environment {
     variables = {
       SUPABASE_URL              = var.supabase_url
-      SUPABASE_SERVICE_KEY      = var.supabase_service_role_key
+      SUPABASE_SERVICE_KEY      = var.supabase_service_key
       BEDROCK_MODEL_ID   = var.bedrock_model_id
       BEDROCK_REGION     = var.bedrock_region
       DEFAULT_AWS_REGION = var.aws_region

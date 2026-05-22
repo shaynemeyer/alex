@@ -36,14 +36,8 @@ QUEUE_NAME = os.getenv('SQS_QUEUE_NAME', 'alex-analysis-jobs')
 
 def get_queue_url():
     """Get the SQS queue URL."""
-    response = sqs.list_queues(QueueNamePrefix=QUEUE_NAME)
-    queues = response.get('QueueUrls', [])
-    
-    for queue_url in queues:
-        if QUEUE_NAME in queue_url:
-            return queue_url
-    
-    raise ValueError(f"Queue {QUEUE_NAME} not found")
+    response = sqs.get_queue_url(QueueName=QUEUE_NAME)
+    return response['QueueUrl']
 
 
 def main():
@@ -84,18 +78,15 @@ def main():
     
     # Create test job
     print("\n🚀 Creating test job...")
-    job_data = {
-        'clerk_user_id': test_user_id,
-        'job_type': 'portfolio_analysis',
-        'status': 'pending',
-        'request_payload': {
+    job_id = db.jobs.create_job(
+        clerk_user_id=test_user_id,
+        job_type='portfolio_analysis',
+        request_payload={
             'analysis_type': 'full',
             'requested_at': datetime.now(timezone.utc).isoformat(),
             'test_run': True
         }
-    }
-    
-    job_id = db.jobs.create(job_data)
+    )
     print(f"✓ Created job: {job_id}")
     
     # Send to SQS
@@ -164,18 +155,18 @@ def main():
             for rec in summary['recommendations']:
                 print(f"  • {rec}")
     
-    # Report analysis
+    # Report analysis — saved as report_payload["content"]
     if job.get('report_payload'):
         print("\n📝 Portfolio Report:")
         report = job['report_payload']
-        analysis = report.get('analysis', '')
-        print(f"  Length: {len(analysis)} characters")
-        if analysis:
-            preview = analysis[:300]
-            if len(analysis) > 300:
+        content = report.get('content', '')
+        print(f"  Length: {len(content)} characters")
+        if content:
+            preview = content[:300]
+            if len(content) > 300:
                 preview += "..."
             print(f"  Preview: {preview}")
-    
+
     # Charts
     if job.get('charts_payload'):
         print(f"\n📊 Visualizations: {len(job['charts_payload'])} charts")
@@ -183,14 +174,15 @@ def main():
             print(f"  • {chart_key}: {chart_data.get('title', 'Untitled')}")
             if chart_data.get('data'):
                 print(f"    Data points: {len(chart_data['data'])}")
-    
-    # Retirement projections
+
+    # Retirement analysis — saved as retirement_payload["analysis"] (text)
     if job.get('retirement_payload'):
         print("\n🎯 Retirement Analysis:")
         ret = job['retirement_payload']
-        print(f"  Success Rate: {ret.get('success_rate', 'N/A')}%")
-        print(f"  Projected Value: ${ret.get('projected_value', 0):,.0f}")
-        print(f"  Years to Retirement: {ret.get('years_to_retirement', 'N/A')}")
+        analysis = ret.get('analysis', '')
+        print(f"  Length: {len(analysis)} characters")
+        if analysis:
+            print(f"  Preview: {analysis[:300]}{'...' if len(analysis) > 300 else ''}")
     
     print("\n" + "=" * 70)
     print("✅ Full test completed successfully!")

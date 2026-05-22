@@ -114,12 +114,12 @@ The tool receives `job_id` and database connection through `RunContextWrapper[Re
 
 [agent.py](../../backend/reporter/agent.py#L17) defines a typed context dataclass that is created once per invocation and injected into the Runner:
 
-| Field | Type | Purpose |
-| --- | --- | --- |
-| `job_id` | `str` | Identifies the job for DB writes and tracing |
-| `portfolio_data` | `dict` | Full portfolio passed through to tools |
-| `user_data` | `dict` | Retirement goals (years, target income) |
-| `db` | `Optional[Any]` | Live database connection; `None` in tests |
+| Field            | Type            | Purpose                                      |
+| ---------------- | --------------- | -------------------------------------------- |
+| `job_id`         | `str`           | Identifies the job for DB writes and tracing |
+| `portfolio_data` | `dict`          | Full portfolio passed through to tools       |
+| `user_data`      | `dict`          | Retirement goals (years, target income)      |
+| `db`             | `Optional[Any]` | Live database connection; `None` in tests    |
 
 Tools receive this via `wrapper: RunContextWrapper[ReporterContext]` — the LLM cannot read or mutate these fields.
 
@@ -150,13 +150,13 @@ The Judge agent uses the same Bedrock model as the Reporter. On any exception it
 
 `run_reporter_agent` is decorated with `tenacity` to handle Bedrock rate limit responses from LiteLLM:
 
-| Parameter | Value |
-| --- | --- |
-| Retry on | `RateLimitError` |
-| Max attempts | 5 |
-| Min wait | 4 s |
-| Max wait | 60 s |
-| Backoff | Exponential |
+| Parameter    | Value            |
+| ------------ | ---------------- |
+| Retry on     | `RateLimitError` |
+| Max attempts | 5                |
+| Min wait     | 4 s              |
+| Max wait     | 60 s             |
+| Backoff      | Exponential      |
 
 ---
 
@@ -202,13 +202,13 @@ The instructions also specify tone (professional, accessible to retail investors
 
 ## Model configuration
 
-| Env var | Default | Purpose |
-| --- | --- | --- |
-| `BEDROCK_MODEL_ID` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` | LLM for report writing and judging |
-| `BEDROCK_REGION` | `us-west-2` | Written to `AWS_REGION_NAME` for LiteLLM |
-| `DEFAULT_AWS_REGION` | `us-west-2` | Region for SageMaker and S3 Vectors clients |
-| `SAGEMAKER_ENDPOINT` | `alex-embedding-endpoint` | Embedding endpoint for market insight retrieval |
-| `LANGFUSE_SECRET_KEY` | _(optional)_ | Enables LangFuse tracing |
+| Env var               | Default                   | Purpose                                         |
+| --------------------- | ------------------------- | ----------------------------------------------- |
+| `BEDROCK_MODEL_ID`    | `us.amazon.nova-pro-v1:0` | LLM for report writing and judging              |
+| `BEDROCK_REGION`      | `us-west-2`               | Written to `AWS_REGION_NAME` for LiteLLM        |
+| `DEFAULT_AWS_REGION`  | `us-west-2`               | Region for SageMaker and S3 Vectors clients     |
+| `SAGEMAKER_ENDPOINT`  | `alex-embedding-endpoint` | Embedding endpoint for market insight retrieval |
+| `LANGFUSE_SECRET_KEY` | _(optional)_              | Enables LangFuse tracing                        |
 
 `AWS_REGION_NAME` is set explicitly from `BEDROCK_REGION` before the `LitellmModel` is constructed — LiteLLM requires this specific variable name, not `AWS_REGION` or `DEFAULT_AWS_REGION`.
 
@@ -216,15 +216,15 @@ The instructions also specify tone (professional, accessible to retail investors
 
 ## Key files
 
-| File | Role |
-| --- | --- |
+| File                                                          | Role                                                                                  |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | [lambda_handler.py](../../backend/reporter/lambda_handler.py) | Lambda entry point, data loading fallback, retry wrapper, judge guard, DB persistence |
-| [agent.py](../../backend/reporter/agent.py) | Agent creation, `ReporterContext`, portfolio formatting, `get_market_insights` tool |
-| [templates.py](../../backend/reporter/templates.py) | Report Writer system prompt and report structure |
-| [judge.py](../../backend/reporter/judge.py) | Judge agent with Structured Outputs, `Evaluation` schema |
-| [observability.py](../../backend/reporter/observability.py) | LangFuse tracing context manager |
-| [test_simple.py](../../backend/reporter/test_simple.py) | Local test without AWS infrastructure |
-| [test_full.py](../../backend/reporter/test_full.py) | End-to-end test against deployed resources |
+| [agent.py](../../backend/reporter/agent.py)                   | Agent creation, `ReporterContext`, portfolio formatting, `get_market_insights` tool   |
+| [templates.py](../../backend/reporter/templates.py)           | Report Writer system prompt and report structure                                      |
+| [judge.py](../../backend/reporter/judge.py)                   | Judge agent with Structured Outputs, `Evaluation` schema                              |
+| [observability.py](../../backend/reporter/observability.py)   | LangFuse tracing context manager                                                      |
+| [test_simple.py](../../backend/reporter/test_simple.py)       | Local test without AWS infrastructure                                                 |
+| [test_full.py](../../backend/reporter/test_full.py)           | End-to-end test against deployed resources                                            |
 
 ---
 

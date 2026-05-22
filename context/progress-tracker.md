@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Guide 6: Agent Orchestra
+- Guide 6: Agent Orchestra — deploying to AWS (terraform apply partially complete, blocked on SQS IAM)
 
 ## Completed
 
@@ -39,18 +39,34 @@ Update this file whenever the current phase, active feature, or implementation s
   - `terraform/7_frontend/variables.tf` — added `supabase_url` and `supabase_service_role_key`
   - `terraform/7_frontend/terraform.tfvars.example` — updated with Supabase vars
 
+- Guide 6 local agent tests — COMPLETE (all 5 agents pass `test_simple.py` with `MOCK_LAMBDAS=true`)
+  - Fixed `SupabaseClient` update call in tagger and planner
+  - Fixed `Jobs.update_*` return value checks in reporter, retirement, charter
+  - Added missing `Jobs.delete()` method to `backend/database/src/models.py`
+  - Fixed reporter narration prefix in prompt
+
+- Guide 6 Lambda packaging — COMPLETE (packages ~67 MB, down from ~108 MB)
+  - Switched all `package_docker.py` scripts from `docker` to `podman`
+  - Removed unused `pydantic-ai` dep from all 5 agents (was pulling in `temporalio` — 32 MB native `.so`)
+  - Added `boto3`/`botocore`/`s3transfer` to packaging exclusion filter (already in Lambda runtime)
+
 ## In Progress
 
-- None.
+- Guide 6 AWS deployment via `terraform/6_agents`
+  - Partial apply succeeded: IAM role, S3 bucket, CloudWatch log groups, S3 objects created
+  - **Blocked**: `aiengineer` IAM user missing `sqs:CreateQueue` permission — needs fixing in AWS IAM console before re-running `terraform apply`
+  - Lambda size issue is resolved (packages well under 250 MB unzipped)
 
 ## Next Up
 
-- None.
+- Fix `sqs:CreateQueue` (and `sqs:DeleteQueue`, `sqs:SetQueueAttributes`) permission for `aiengineer` in AWS IAM console
+- Re-run `terraform apply` in `terraform/6_agents`
+- Deploy Lambda code: `cd backend && uv run deploy_all_lambdas.py`
+- Run `test_full.py` against deployed AWS resources to validate end-to-end
 
-## Open Questions
+## Feature Ideas
 
-- `terraform/5_database/` — kept as-is (student can delete when ready; no code depends on it)
-- `.env.example` — student should replace `AURORA_CLUSTER_ARN`/`AURORA_SECRET_ARN` with `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, and `DATABASE_URL`
+- **Lambda Layers for shared dependencies**: All 5 agent Lambdas share the same heavy deps (`litellm`, `openai-agents`, `langfuse`, etc.). These could be extracted into a single `aws_lambda_layer_version` Terraform resource, reducing each Lambda zip to handler files only (~KB vs ~67 MB). Layer has its own 250 MB unzipped limit. Not required now (packages are within limits), but worthwhile for faster deploys.
 
 ## Architecture Decisions
 

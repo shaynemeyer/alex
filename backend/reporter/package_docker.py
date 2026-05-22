@@ -43,11 +43,12 @@ def package_lambda():
             ["uv", "export", "--no-hashes", "--no-emit-project"], cwd=str(reporter_dir)
         )
 
-        # Filter out packages that don't work in Lambda
+        # Filter out packages already in Lambda runtime or not needed
+        # boto3/botocore/s3transfer are built into Python 3.12 runtime
+        lambda_exclude = {"pyperclip", "boto3", "botocore", "s3transfer"}
         filtered_requirements = []
         for line in requirements_result.splitlines():
-            # Skip pyperclip (clipboard library not needed in Lambda)
-            if line.startswith("pyperclip"):
+            if any(line.startswith(pkg) for pkg in lambda_exclude):
                 print(f"Excluding from Lambda: {line}")
                 continue
             filtered_requirements.append(line)

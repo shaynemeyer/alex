@@ -7,28 +7,27 @@ import os
 import json
 import boto3
 import time
+from botocore.config import Config
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
 from src import Database
-from src.schemas import JobCreate
 
 def test_reporter_lambda():
     """Test the Reporter agent via Lambda invocation"""
     
     db = Database()
-    lambda_client = boto3.client('lambda')
+    lambda_client = boto3.client('lambda', config=Config(read_timeout=330, connect_timeout=10))
     
     # Create test job
     test_user_id = "test_user_001"
     
-    job_create = JobCreate(
+    job_id = db.jobs.create_job(
         clerk_user_id=test_user_id,
         job_type="portfolio_analysis",
         request_payload={"analysis_type": "test", "test": True}
     )
-    job_id = db.jobs.create(job_create.model_dump())
     
     print(f"Testing Reporter Lambda with job {job_id}")
     print("=" * 60)

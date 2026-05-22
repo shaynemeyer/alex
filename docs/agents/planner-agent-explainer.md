@@ -231,18 +231,18 @@ model = LitellmModel(model=f"bedrock/{model_id}")
 
 `AWS_REGION_NAME` is set explicitly from `BEDROCK_REGION` before creating the model — LiteLLM requires this specific env var name (not `AWS_REGION` or `DEFAULT_AWS_REGION`).
 
-| Env var               | Default                                        | Purpose                                  |
-| --------------------- | ---------------------------------------------- | ---------------------------------------- |
-| `BEDROCK_MODEL_ID`    | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` | LLM for orchestration decisions          |
-| `BEDROCK_REGION`      | `us-west-2`                                    | Written to `AWS_REGION_NAME` for LiteLLM |
-| `TAGGER_FUNCTION`     | `alex-tagger`                                  | Tagger Lambda function name              |
-| `REPORTER_FUNCTION`   | `alex-reporter`                                | Reporter Lambda function name            |
-| `CHARTER_FUNCTION`    | `alex-charter`                                 | Charter Lambda function name             |
-| `RETIREMENT_FUNCTION` | `alex-retirement`                              | Retirement Lambda function name          |
-| `MOCK_LAMBDAS`        | `false`                                        | Skip real Lambda calls for local testing |
-| `MASSIVE_API_KEY`     | _(optional)_                                   | massive.com key for live prices          |
-| `MASSIVE_PLAN`        | _(optional)_                                   | Set to `paid` for minute-level data      |
-| `LANGFUSE_SECRET_KEY` | _(optional)_                                   | Enables LangFuse tracing                 |
+| Env var               | Default                   | Purpose                                  |
+| --------------------- | ------------------------- | ---------------------------------------- |
+| `BEDROCK_MODEL_ID`    | `us.amazon.nova-pro-v1:0` | LLM for orchestration decisions          |
+| `BEDROCK_REGION`      | `us-west-2`               | Written to `AWS_REGION_NAME` for LiteLLM |
+| `TAGGER_FUNCTION`     | `alex-tagger`             | Tagger Lambda function name              |
+| `REPORTER_FUNCTION`   | `alex-reporter`           | Reporter Lambda function name            |
+| `CHARTER_FUNCTION`    | `alex-charter`            | Charter Lambda function name             |
+| `RETIREMENT_FUNCTION` | `alex-retirement`         | Retirement Lambda function name          |
+| `MOCK_LAMBDAS`        | `false`                   | Skip real Lambda calls for local testing |
+| `MASSIVE_API_KEY`     | _(optional)_              | massive.com key for live prices          |
+| `MASSIVE_PLAN`        | _(optional)_              | Set to `paid` for minute-level data      |
+| `LANGFUSE_SECRET_KEY` | _(optional)_              | Enables LangFuse tracing                 |
 
 ---
 

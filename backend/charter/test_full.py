@@ -6,10 +6,10 @@ Full test for Charter agent via Lambda
 import json
 import boto3
 import time
+from botocore.config import Config
 from dotenv import load_dotenv
 
 from src import Database
-from src.schemas import JobCreate
 
 load_dotenv(override=True)
 
@@ -18,17 +18,16 @@ def test_charter_lambda():
     """Test the Charter agent via Lambda invocation"""
 
     db = Database()
-    lambda_client = boto3.client("lambda")
+    lambda_client = boto3.client("lambda", config=Config(read_timeout=330, connect_timeout=10))
 
     # Create test job
     test_user_id = "test_user_001"
 
-    job_create = JobCreate(
+    job_id = db.jobs.create_job(
         clerk_user_id=test_user_id,
         job_type="portfolio_analysis",
         request_payload={"analysis_type": "test", "test": True},
     )
-    job_id = db.jobs.create(job_create.model_dump())
 
     # Load portfolio data for the test
     user = db.users.find_by_clerk_id(test_user_id)

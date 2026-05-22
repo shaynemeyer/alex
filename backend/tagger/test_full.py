@@ -6,6 +6,7 @@ Full test for Tagger agent via Lambda
 import os
 import json
 import boto3
+from botocore.config import Config
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -16,7 +17,7 @@ def test_tagger_lambda():
     """Test the Tagger agent via Lambda invocation"""
     
     db = Database()
-    lambda_client = boto3.client('lambda')
+    lambda_client = boto3.client('lambda', config=Config(read_timeout=330, connect_timeout=10))
     
     # Test instruments that need tagging
     test_instruments = [

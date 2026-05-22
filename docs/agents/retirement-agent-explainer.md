@@ -88,12 +88,12 @@ flowchart TD
 
 **Return parameters used:**
 
-| Asset class  | Mean annual return | Std deviation |
-| ------------ | ------------------ | ------------- |
-| Equity       | 7 %                | 18 %          |
-| Bonds        | 4 %                | 5 %           |
-| Real estate  | 6 %                | 12 %          |
-| Cash         | 2 %                | —             |
+| Asset class | Mean annual return | Std deviation |
+| ----------- | ------------------ | ------------- |
+| Equity      | 7 %                | 18 %          |
+| Bonds       | 4 %                | 5 %           |
+| Real estate | 6 %                | 12 %          |
+| Cash        | 2 %                | —             |
 
 Annual contributions of $10,000 are assumed during the accumulation phase. Inflation of 3% is applied each withdrawal year in retirement.
 
@@ -138,14 +138,14 @@ Within the agent run itself, the OpenAI Agents SDK `trace("Retirement Agent")` c
 
 ## Database interactions
 
-| Operation | Method | When |
-| --------- | ------ | ---- |
-| Look up job by ID | `db.jobs.find_by_id` | On entry, to find `clerk_user_id` |
-| Look up user by Clerk ID | `db.users.find_by_clerk_id` | Load `years_until_retirement`, `target_retirement_income` |
-| List accounts for user | `db.accounts.find_by_user` | Build portfolio structure |
-| List positions for account | `db.positions.find_by_account` | Enumerate holdings |
-| Look up instrument | `db.instruments.find_by_symbol` | Get `current_price` and `allocation_asset_class` |
-| Persist analysis | `db.jobs.update_retirement` | After LLM returns `final_output` |
+| Operation                  | Method                          | When                                                      |
+| -------------------------- | ------------------------------- | --------------------------------------------------------- |
+| Look up job by ID          | `db.jobs.find_by_id`            | On entry, to find `clerk_user_id`                         |
+| Look up user by Clerk ID   | `db.users.find_by_clerk_id`     | Load `years_until_retirement`, `target_retirement_income` |
+| List accounts for user     | `db.accounts.find_by_user`      | Build portfolio structure                                 |
+| List positions for account | `db.positions.find_by_account`  | Enumerate holdings                                        |
+| Look up instrument         | `db.instruments.find_by_symbol` | Get `current_price` and `allocation_asset_class`          |
+| Persist analysis           | `db.jobs.update_retirement`     | After LLM returns `final_output`                          |
 
 ---
 
@@ -180,24 +180,24 @@ The LLM receives no tools and is expected to return a complete markdown analysis
 
 ## Key files
 
-| File | Role |
-| ---- | ---- |
-| [lambda_handler.py](backend/retirement/lambda_handler.py) | Lambda entry point; portfolio assembly, retry wrapper, DB persistence |
-| [agent.py](backend/retirement/agent.py) | `create_agent`: portfolio maths, Monte Carlo, projections, task assembly |
-| [templates.py](backend/retirement/templates.py) | `RETIREMENT_INSTRUCTIONS` system prompt for the LLM |
-| [observability.py](backend/retirement/observability.py) | LangFuse + logfire context manager |
-| [pyproject.toml](backend/retirement/pyproject.toml) | Dependencies: `openai-agents[litellm]`, `tenacity`, `boto3`, shared `src` DB lib |
+| File                                                      | Role                                                                             |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [lambda_handler.py](backend/retirement/lambda_handler.py) | Lambda entry point; portfolio assembly, retry wrapper, DB persistence            |
+| [agent.py](backend/retirement/agent.py)                   | `create_agent`: portfolio maths, Monte Carlo, projections, task assembly         |
+| [templates.py](backend/retirement/templates.py)           | `RETIREMENT_INSTRUCTIONS` system prompt for the LLM                              |
+| [observability.py](backend/retirement/observability.py)   | LangFuse + logfire context manager                                               |
+| [pyproject.toml](backend/retirement/pyproject.toml)       | Dependencies: `openai-agents[litellm]`, `tenacity`, `boto3`, shared `src` DB lib |
 
 ---
 
 ## Environment variables
 
-| Variable | Default | Purpose |
-| -------- | ------- | ------- |
-| `BEDROCK_MODEL_ID` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0` | Bedrock model; override with Nova Pro ID in production |
-| `BEDROCK_REGION` | `us-west-2` | AWS region; written to `AWS_REGION_NAME` for LiteLLM |
-| `LANGFUSE_SECRET_KEY` | _(optional)_ | Enables LangFuse trace export |
-| `OPENAI_API_KEY` | _(required by SDK)_ | Needed by `openai-agents` SDK even when using LiteLLM |
+| Variable              | Default                   | Purpose                                                |
+| --------------------- | ------------------------- | ------------------------------------------------------ |
+| `BEDROCK_MODEL_ID`    | `us.amazon.nova-pro-v1:0` | Bedrock model; override with Nova Pro ID in production |
+| `BEDROCK_REGION`      | `us-west-2`               | AWS region; written to `AWS_REGION_NAME` for LiteLLM   |
+| `LANGFUSE_SECRET_KEY` | _(optional)_              | Enables LangFuse trace export                          |
+| `OPENAI_API_KEY`      | _(required by SDK)_       | Needed by `openai-agents` SDK even when using LiteLLM  |
 
 > **Note:** LiteLLM requires `AWS_REGION_NAME` specifically — not `AWS_REGION` or `DEFAULT_AWS_REGION`. `create_agent` sets this explicitly via `os.environ["AWS_REGION_NAME"] = bedrock_region`.
 

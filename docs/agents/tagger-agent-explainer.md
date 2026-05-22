@@ -201,7 +201,7 @@ Model is configured via environment variables:
 
 | Env var            | Default                                                        |
 | ------------------ | -------------------------------------------------------------- |
-| `BEDROCK_MODEL_ID` | `us.anthropic.claude-3-7-sonnet-20250219-v1:0`                 |
+| `BEDROCK_MODEL_ID` | `us.amazon.nova-pro-v1:0`                                      |
 | `BEDROCK_REGION`   | `us-west-2`                                                    |
 | `AWS_REGION_NAME`  | Set at runtime to match `BEDROCK_REGION` (required by LiteLLM) |
 
