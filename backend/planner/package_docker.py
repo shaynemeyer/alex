@@ -60,7 +60,7 @@ def package_lambda():
         # The --no-emit-project excludes the current project from requirements
         # We still need to manually install the database package
         docker_cmd = [
-            "docker", "run", "--rm",
+            "podman", "run", "--rm",
             "--platform", "linux/amd64",
             "-v", f"{temp_path}:/build",
             "-v", f"{backend_dir}/database:/database",
@@ -132,7 +132,7 @@ def main():
     
     # Check if Docker is available
     try:
-        run_command(["docker", "--version"])
+        run_command(["podman", "--version"])
     except FileNotFoundError:
         print("Error: Docker is not installed or not in PATH")
         sys.exit(1)

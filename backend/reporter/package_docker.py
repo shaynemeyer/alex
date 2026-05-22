@@ -57,7 +57,7 @@ def package_lambda():
 
         # Use Docker to install dependencies for Lambda's architecture
         docker_cmd = [
-            "docker",
+            "podman",
             "run",
             "--rm",
             "--platform",
@@ -132,7 +132,7 @@ def main():
 
     # Check if Docker is available
     try:
-        run_command(["docker", "--version"])
+        run_command(["podman", "--version"])
     except FileNotFoundError:
         print("Error: Docker is not installed or not in PATH")
         sys.exit(1)

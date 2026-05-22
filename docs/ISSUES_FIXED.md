@@ -1,5 +1,15 @@
 # Issues Fixed
 
+## 2026-05-22 — Lambda Packaging Fails: Docker Not Found
+
+**Affected:** `backend/tagger/package_docker.py`, `backend/reporter/package_docker.py`, `backend/charter/package_docker.py`, `backend/planner/package_docker.py`, `backend/retirement/package_docker.py`
+
+All per-agent packaging scripts were hardcoded to call `docker` (e.g. `["docker", "run", "--rm", ...]` and `["docker", "--version"]`). This project uses **Podman** as the container runtime, so every script failed immediately with `Error: Docker is not installed or not in PATH`.
+
+**Fix:** Replaced all `"docker"` string literals with `"podman"` in the five affected scripts.
+
+---
+
 ## 2026-05-22 — All Agent Test Fixes
 
 ### `SupabaseClient` has no attribute `update`
