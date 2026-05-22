@@ -41,29 +41,9 @@ async def process_instruments(instruments: List[Dict[str, str]]) -> Dict[str, An
     
     for classification in classifications:
         try:
-            # Convert to database format
             db_instrument = classification_to_db_format(classification)
-            
-            # Check if instrument exists
-            existing = db.instruments.find_by_symbol(classification.symbol)
-            
-            if existing:
-                # Update existing instrument
-                update_data = db_instrument.model_dump()
-                # Remove symbol as it's the key
-                del update_data['symbol']
-                
-                rows = db.client.update(
-                    'instruments',
-                    update_data,
-                    "symbol = :symbol",
-                    {'symbol': classification.symbol}
-                )
-                logger.info(f"Updated {classification.symbol} in database ({rows} rows)")
-            else:
-                # Create new instrument
-                db.instruments.create_instrument(db_instrument)
-                logger.info(f"Created {classification.symbol} in database")
+            db.instruments.create_instrument(db_instrument)
+            logger.info(f"Upserted {classification.symbol} in database")
             
             updated.append(classification.symbol)
             

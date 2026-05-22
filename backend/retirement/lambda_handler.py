@@ -109,14 +109,12 @@ async def run_retirement_agent(job_id: str, portfolio_data: Dict[str, Any]) -> D
             'agent': 'retirement'
         }
         
-        success = db.jobs.update_retirement(job_id, retirement_payload)
-        
-        if not success:
-            logger.error(f"Failed to save retirement analysis for job {job_id}")
-        
+        db.jobs.update_retirement(job_id, retirement_payload)
+        logger.info(f"Saved retirement analysis for job {job_id}")
+
         return {
-            'success': success,
-            'message': 'Retirement analysis completed' if success else 'Analysis completed but failed to save',
+            'success': True,
+            'message': 'Retirement analysis completed',
             'final_output': result.final_output
         }
 

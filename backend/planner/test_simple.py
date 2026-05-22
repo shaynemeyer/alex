@@ -15,7 +15,6 @@ load_dotenv(override=True)
 os.environ['MOCK_LAMBDAS'] = 'true'
 
 from src import Database
-from src.schemas import JobCreate
 
 def setup_test_data():
     """Ensure test data exists and create a test job"""
@@ -41,12 +40,11 @@ def setup_test_data():
         raise ValueError(f"Test user {test_user_id} not found. Please run: cd ../database && uv run reset_db.py --with-test-data")
     
     # Create test job
-    job_create = JobCreate(
+    job_id = db.jobs.create_job(
         clerk_user_id=test_user_id,
         job_type="portfolio_analysis",
-        request_payload={"analysis_type": "comprehensive", "test": True}
+        request_payload={"analysis_type": "comprehensive", "test": True},
     )
-    job_id = db.jobs.create(job_create.model_dump())
     
     return job_id
 

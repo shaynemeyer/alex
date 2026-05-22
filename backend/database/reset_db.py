@@ -104,6 +104,8 @@ def main():
     parser = argparse.ArgumentParser(description="Reset Alex database")
     parser.add_argument("--with-test-data", action="store_true",
                         help="Create test user with sample portfolio")
+    parser.add_argument("--skip-drop", action="store_true",
+                        help="Skip truncating tables (useful for seeding test data without wiping existing data)")
     args = parser.parse_args()
 
     print("Database Reset")
@@ -111,7 +113,8 @@ def main():
 
     db = Database()
 
-    truncate_tables(db)
+    if not args.skip_drop:
+        truncate_tables(db)
 
     # Re-seed instruments
     print("\nLoading seed data...")
@@ -127,9 +130,10 @@ def main():
 
     # Final counts
     print("\nFinal record counts:")
+    pk = {"users": "clerk_user_id", "instruments": "symbol"}
     for table in ["users", "instruments", "accounts", "positions", "jobs"]:
-        resp = db.client.table(table).select("id" if table != "users" else "clerk_user_id",
-                                             count="exact").execute()
+        col = pk.get(table, "id")
+        resp = db.client.table(table).select(col, count="exact").execute()
         count = resp.count if resp.count is not None else len(resp.data)
         print(f"  {table:<20} {count:>6} rows")
 

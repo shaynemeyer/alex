@@ -9,11 +9,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-def run_command(cmd, cwd):
+AGENT_TIMEOUT = 120  # seconds per agent test
+
+def run_command(cmd, cwd, env=None):
     """Run a command and capture output."""
     print(f"Running in {cwd}: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
-    return result.returncode == 0, result.stdout, result.stderr
+    try:
+        result = subprocess.run(
+            cmd, cwd=cwd, capture_output=True, text=True, env=env, timeout=AGENT_TIMEOUT
+        )
+        return result.returncode == 0, result.stdout, result.stderr
+    except subprocess.TimeoutExpired:
+        return False, "", f"Timed out after {AGENT_TIMEOUT}s"
 
 def test_agent(agent_name, test_file="test_simple.py"):
     """Test an individual agent in its directory."""
@@ -29,14 +36,16 @@ def test_agent(agent_name, test_file="test_simple.py"):
         print(f"  ⚠️  {agent_name}: No {test_file} found, skipping")
         return True  # Not a failure, just skip
     
-    # Set environment for mocked lambdas
+    # Set environment for mocked lambdas; clear VIRTUAL_ENV so uv uses the agent's own venv
     env = os.environ.copy()
     env['MOCK_LAMBDAS'] = 'true'
-    
+    env.pop('VIRTUAL_ENV', None)
+
     # Run the test with uv
     success, stdout, stderr = run_command(
         ['uv', 'run', test_file],
-        cwd=str(agent_dir)
+        cwd=str(agent_dir),
+        env=env,
     )
     
     if success:

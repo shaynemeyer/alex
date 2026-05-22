@@ -88,16 +88,12 @@ async def run_reporter_agent(
             "agent": "reporter",
         }
 
-        success = db.jobs.update_report(job_id, report_payload)
-
-        if not success:
-            logger.error(f"Failed to save report for job {job_id}")
+        db.jobs.update_report(job_id, report_payload)
+        logger.info(f"Saved report for job {job_id}")
 
         return {
-            "success": success,
-            "message": "Report generated and stored"
-            if success
-            else "Report generated but failed to save",
+            "success": True,
+            "message": "Report generated and stored",
             "final_output": result.final_output,
         }
 

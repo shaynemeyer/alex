@@ -102,9 +102,9 @@ async def run_charter_agent(job_id: str, portfolio_data: Dict[str, Any], db=None
                         # Save to database
                         if db and charts_data:
                             try:
-                                success = db.jobs.update_charts(job_id, charts_data)
-                                charts_saved = bool(success)
-                                logger.info(f"Charter: Database update returned: {success}")
+                                db.jobs.update_charts(job_id, charts_data)
+                                charts_saved = True
+                                logger.info(f"Charter: Saved {len(charts_data)} charts to database")
                             except Exception as e:
                                 logger.error(f"Charter: Database error: {e}")
                     else:

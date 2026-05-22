@@ -45,7 +45,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Guide 6: Agent Orchestra
+- None.
 
 ## Open Questions
 

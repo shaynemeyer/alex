@@ -90,14 +90,8 @@ def update_prices_for_symbols(symbols: Set[str], db) -> None:
         try:
             instrument = db.instruments.find_by_symbol(symbol)
             if instrument:
-                update_data = {"current_price": price}
-                success = db.client.update(
-                    "instruments", update_data, "symbol = :symbol", {"symbol": symbol}
-                )
-                if success:
-                    logger.info(f"Market: Updated {symbol} price to ${price:.2f}")
-                else:
-                    logger.warning(f"Market: Failed to update price for {symbol}")
+                db.client.table("instruments").update({"current_price": price}).eq("symbol", symbol).execute()
+                logger.info(f"Market: Updated {symbol} price to ${price:.2f}")
             else:
                 logger.warning(f"Market: Instrument {symbol} not found in database")
         except Exception as e:

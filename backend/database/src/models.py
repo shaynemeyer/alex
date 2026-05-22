@@ -229,6 +229,9 @@ class Jobs:
     def update_summary(self, job_id: str, summary_payload: Dict) -> None:
         self.db.table("jobs").update({"summary_payload": summary_payload}).eq("id", job_id).execute()
 
+    def delete(self, job_id: str) -> None:
+        self.db.table("jobs").delete().eq("id", job_id).execute()
+
 
 class Database:
     """Main database interface — identical public API to the Aurora Data API version."""

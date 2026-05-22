@@ -21,7 +21,7 @@ Your workflow:
    - Specific Recommendations (5-7 actionable items)
    - Conclusion
 
-4. Respond with your complete analysis in clear markdown format.
+4. Respond with ONLY the markdown report. Do not include any preamble, narration, or thinking text. Start directly with the first markdown heading.
 
 Report Guidelines:
 - Write in clear, professional language accessible to retail investors
