@@ -126,6 +126,9 @@ class Accounts:
     def update_account(self, account_id: str, data: Dict) -> None:
         self.db.table("accounts").update(data).eq("id", account_id).execute()
 
+    def delete(self, account_id: str) -> None:
+        self.db.table("accounts").delete().eq("id", account_id).execute()
+
 
 class Positions:
     def __init__(self, db: SupabaseClient):
@@ -166,6 +169,16 @@ class Positions:
             "total_value": total,
             "total_shares": total_shares,
         }
+
+    def find_by_id(self, position_id: str) -> Optional[Dict]:
+        rows = self.db.table("positions").select("*").eq("id", position_id).execute().data
+        return rows[0] if rows else None
+
+    def update(self, position_id: str, data: Dict) -> None:
+        self.db.table("positions").update(data).eq("id", position_id).execute()
+
+    def delete(self, position_id: str) -> None:
+        self.db.table("positions").delete().eq("id", position_id).execute()
 
     def add_position(self, account_id: str, symbol: str, quantity: Decimal) -> Optional[str]:
         data = {

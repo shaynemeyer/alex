@@ -5,7 +5,7 @@ aws_region = "us-west-2"
 
 # Supabase configuration (same values as Part 6)
 supabase_url              = "https://xxxx.supabase.co"
-supabase_service_role_key = "eyJ..."
+supabase_service_key = "eyJ..."
 
 # Clerk configuration for JWT validation
 # Get these from your Clerk dashboard

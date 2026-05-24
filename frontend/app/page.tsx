@@ -1,13 +1,10 @@
-import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+'use client';
+
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import Link from "next/link";
-import Head from "next/head";
 
 export default function Home() {
   return (
-    <>
-      <Head>
-        <title>Alex AI Financial Advisor - Intelligent Portfolio Management</title>
-      </Head>
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50">
       {/* Navigation */}
       <nav className="px-8 py-6 bg-white shadow-sm">
@@ -49,7 +46,7 @@ export default function Home() {
             Your AI-Powered Financial Future
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Experience the power of autonomous AI agents working together to analyze your portfolio, 
+            Experience the power of autonomous AI agents working together to analyze your portfolio,
             plan your retirement, and optimize your investments.
           </p>
           <div className="flex gap-6 justify-center">
@@ -152,11 +149,10 @@ export default function Home() {
       <footer className="px-8 py-6 bg-gray-900 text-gray-400 text-center text-sm">
         <p>© 2025 Alex AI Financial Advisor. All rights reserved.</p>
         <p className="mt-2">
-          This AI-generated advice has not been vetted by a qualified financial advisor and should not be used for trading decisions. 
+          This AI-generated advice has not been vetted by a qualified financial advisor and should not be used for trading decisions.
           For informational purposes only.
         </p>
       </footer>
     </div>
-    </>
   );
 }

@@ -1,11 +1,14 @@
-import { useAuth } from "@clerk/nextjs";
+'use client';
+
+import { useAuth } from "@clerk/clerk-react";
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/router";
-import Layout from "../components/Layout";
-import ConfirmModal from "../components/ConfirmModal";
-import { API_URL } from "../lib/config";
-import { SkeletonTable } from "../components/Skeleton";
-import Head from "next/head";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import Layout from "@/components/Layout";
+import ConfirmModal from "@/components/ConfirmModal";
+import AccountDetail from "./[id]/AccountDetail";
+import { API_URL } from "@/lib/config";
+import { SkeletonTable } from "@/components/Skeleton";
 
 interface Position {
   id: string;
@@ -22,9 +25,11 @@ interface Account {
   positions?: Position[];
 }
 
-export default function Accounts() {
+function AccountsInner() {
   const { getToken } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedId = searchParams.get('id');
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [populatingData, setPopulatingData] = useState(false);
@@ -45,19 +50,15 @@ export default function Accounts() {
     try {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/accounts`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (response.ok) {
         const data = await response.json();
         console.log('Accounts received from API:', data);
-        // For each account, load positions
         const accountsWithPositions = await Promise.all(
           data.map(async (account: Account) => {
             console.log('Processing account:', account.id, account.account_name);
-            // Skip if account has no ID
             if (!account.id) {
               console.warn('Account missing ID:', account);
               return { ...account, positions: [] };
@@ -66,11 +67,7 @@ export default function Accounts() {
             try {
               const positionsResponse = await fetch(
                 `${API_URL}/api/accounts/${account.id}/positions`,
-                {
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                  },
-                }
+                { headers: { 'Authorization': `Bearer ${token}` } }
               );
               if (positionsResponse.ok) {
                 const data = await positionsResponse.json();
@@ -99,20 +96,14 @@ export default function Accounts() {
     loadAccounts();
   }, [loadAccounts]);
 
-  // Listen for analysis completion events to refresh data
   useEffect(() => {
     const handleAnalysisCompleted = () => {
-      // Refresh accounts to get updated prices after analysis
       console.log('Analysis completed - refreshing accounts...');
       loadAccounts();
     };
 
-    // Listen for the completion event
     window.addEventListener('analysis:completed', handleAnalysisCompleted);
-
-    return () => {
-      window.removeEventListener('analysis:completed', handleAnalysisCompleted);
-    };
+    return () => window.removeEventListener('analysis:completed', handleAnalysisCompleted);
   }, [loadAccounts]);
 
   const populateTestData = async () => {
@@ -132,7 +123,7 @@ export default function Accounts() {
       if (response.ok) {
         const data = await response.json();
         setMessage({ type: 'success', text: data.message });
-        await loadAccounts(); // Reload accounts after population
+        await loadAccounts();
       } else {
         setMessage({ type: 'error', text: 'Failed to populate test data' });
       }
@@ -152,17 +143,13 @@ export default function Accounts() {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/reset-accounts`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (response.ok) {
         const data = await response.json();
         setMessage({ type: 'success', text: data.message });
-        // Clear accounts immediately after successful reset
         setAccounts([]);
-        // Then reload to confirm empty state
         await loadAccounts();
       } else {
         setMessage({ type: 'error', text: 'Failed to reset accounts' });
@@ -236,9 +223,7 @@ export default function Accounts() {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/accounts/${accountId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (response.ok) {
@@ -256,19 +241,18 @@ export default function Accounts() {
   };
 
   const formatCurrencyInput = (value: string) => {
-    // Remove non-numeric characters except decimal
     const cleaned = value.replace(/[^0-9.]/g, '');
-    // Format with commas
     const parts = cleaned.split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     return parts.join('.');
   };
 
+  if (selectedId) {
+    return <AccountDetail id={selectedId} />;
+  }
+
   return (
     <>
-      <Head>
-        <title>Accounts - Alex AI Financial Advisor</title>
-      </Head>
       <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -331,7 +315,6 @@ export default function Accounts() {
             </div>
           ) : (
             <>
-              {/* Portfolio Summary */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -353,7 +336,6 @@ export default function Accounts() {
                 </div>
               </div>
 
-              {/* Accounts Table */}
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -401,7 +383,7 @@ export default function Accounts() {
                           <td className="py-4 px-4">
                             <div className="flex justify-center gap-2">
                               <button
-                                onClick={() => router.push(`/accounts/${account.id}`)}
+                                onClick={() => router.push(`/accounts?id=${account.id}`)}
                                 className="text-primary hover:bg-primary/10 p-2 rounded transition-colors"
                                 title="View/Edit"
                               >
@@ -436,7 +418,6 @@ export default function Accounts() {
           )}
         </div>
 
-        {/* Add Account Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-md w-full p-6">
@@ -515,7 +496,6 @@ export default function Accounts() {
           </div>
         )}
 
-        {/* Confirmation Modal */}
         <ConfirmModal
           isOpen={confirmModal.isOpen}
           title={confirmModal.type === 'reset' ? 'Reset All Accounts' : 'Delete Account'}
@@ -556,5 +536,13 @@ export default function Accounts() {
       </div>
       </Layout>
     </>
+  );
+}
+
+export default function AccountsPage() {
+  return (
+    <Suspense>
+      <AccountsInner />
+    </Suspense>
   );
 }

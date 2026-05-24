@@ -9,8 +9,8 @@ variable "supabase_url" {
   type        = string
 }
 
-variable "supabase_service_role_key" {
-  description = "Supabase service role key"
+variable "supabase_service_key" {
+  description = "Supabase service key"
   type        = string
   sensitive   = true
 }

@@ -210,12 +210,8 @@ async def get_or_create_user(
             "region_targets": {"north_america": 50, "international": 50},
         }
 
-        # Insert directly with all data
-        created_clerk_id = db.users.db.insert(
-            "users", user_data, returning="clerk_user_id"
-        )
+        db.users.db.table("users").insert(user_data).execute()
 
-        # Fetch the created user
         created_user = db.users.find_by_clerk_id(clerk_user_id)
         logger.info(f"Created new user: {clerk_user_id}")
 
@@ -242,13 +238,7 @@ async def update_user(
         # Update user - users table uses clerk_user_id as primary key
         update_data = user_update.model_dump(exclude_unset=True)
 
-        # Use the database client directly since users table has clerk_user_id as PK
-        db.users.db.update(
-            "users",
-            update_data,
-            "clerk_user_id = :clerk_user_id",
-            {"clerk_user_id": clerk_user_id},
-        )
+        db.users.update_user(clerk_user_id, update_data)
 
         # Return updated user
         updated_user = db.users.find_by_clerk_id(clerk_user_id)
@@ -322,7 +312,7 @@ async def update_account(
 
         # Update account
         update_data = account_update.model_dump(exclude_unset=True)
-        db.accounts.update(account_id, update_data)
+        db.accounts.update_account(account_id, update_data)
 
         # Return updated account
         updated_account = db.accounts.find_by_id(account_id)

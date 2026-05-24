@@ -1,28 +1,19 @@
-import { useRouter } from 'next/router';
+'use client';
+
+import { usePathname } from 'next/navigation';
 import { useEffect, useState, ReactNode } from 'react';
 
 export default function PageTransition({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const pathname = usePathname();
+  const [opacity, setOpacity] = useState(1);
 
   useEffect(() => {
-    const handleStart = () => setIsTransitioning(true);
-    const handleComplete = () => setIsTransitioning(false);
-
-    router.events.on('routeChangeStart', handleStart);
-    router.events.on('routeChangeComplete', handleComplete);
-    router.events.on('routeChangeError', handleComplete);
-
-    return () => {
-      router.events.off('routeChangeStart', handleStart);
-      router.events.off('routeChangeComplete', handleComplete);
-      router.events.off('routeChangeError', handleComplete);
-    };
-  }, [router]);
+    setOpacity(0);
+    const t = setTimeout(() => setOpacity(1), 150);
+    return () => clearTimeout(t);
+  }, [pathname]);
 
   return (
-    <div className={`transition-opacity duration-300 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
-      {children}
-    </div>
+    <div style={{ opacity, transition: 'opacity 0.15s ease' }}>{children}</div>
   );
 }

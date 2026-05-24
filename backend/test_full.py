@@ -27,7 +27,7 @@ def setup_test_data(db):
             years_to_retirement=25,
             target_allocation={'stocks': 70, 'bonds': 20, 'alternatives': 10}
         )
-        db.users.create(user_data.model_dump())
+        db.users.create_user(clerk_user_id=test_user_id, display_name="Test User")
         print(f"  ✓ Created test user: {test_user_id}")
     else:
         print(f"  ✓ Test user exists: {test_user_id}")
@@ -41,7 +41,11 @@ def setup_test_data(db):
             account_type="401k",
             cash_balance=5000.00
         )
-        account_id = db.accounts.create(account_data.model_dump())
+        account_id = db.accounts.create_account(
+            clerk_user_id=test_user_id,
+            account_name="Test 401(k)",
+            cash_balance=5000.00,
+        )
         print(f"  ✓ Created test account: Test 401(k)")
         
         # Add some positions
@@ -58,7 +62,7 @@ def setup_test_data(db):
                 symbol=pos['symbol'],
                 quantity=pos['quantity']
             )
-            db.positions.create(position_data.model_dump())
+            db.positions.add_position(account_id=account_id, symbol=pos['symbol'], quantity=pos['quantity'])
         print(f"  ✓ Created {len(positions)} positions")
     else:
         print(f"  ✓ Test account exists with {len(db.positions.find_by_account(accounts[0]['id']))} positions")
@@ -92,7 +96,11 @@ def main():
         }
     }
     
-    job_id = db.jobs.create(job_data)
+    job_id = db.jobs.create_job(
+        clerk_user_id=job_data['clerk_user_id'],
+        job_type=job_data['job_type'],
+        request_payload=job_data['request_payload'],
+    )
     print(f"  ✓ Created job: {job_id}")
     
     # Get queue URL

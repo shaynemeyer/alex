@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '@clerk/nextjs';
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@clerk/clerk-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
@@ -8,9 +10,8 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import Layout from '../components/Layout';
-import { API_URL } from '../lib/config';
-import Head from 'next/head';
+import Layout from '@/components/Layout';
+import { API_URL } from '@/lib/config';
 
 interface Job {
   id: string;
@@ -23,7 +24,7 @@ interface Job {
     generated_at: string;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  charts_payload?: Record<string, any> | null;  // Charter stores charts with dynamic keys
+  charts_payload?: Record<string, any> | null;
   retirement_payload?: {
     agent: string;
     analysis: string;
@@ -41,24 +42,24 @@ interface JobListItem {
 
 type TabType = 'overview' | 'charts' | 'retirement';
 
-// Color palette for charts
 const COLORS = [
-  '#209DD7', // primary
-  '#753991', // AI accent
-  '#FFB707', // accent
-  '#062147', // dark
-  '#60A5FA', // light blue
-  '#A78BFA', // light purple
-  '#FBBF24', // yellow
-  '#34D399', // green
-  '#F87171', // red
-  '#94A3B8', // gray
+  '#209DD7',
+  '#753991',
+  '#FFB707',
+  '#062147',
+  '#60A5FA',
+  '#A78BFA',
+  '#FBBF24',
+  '#34D399',
+  '#F87171',
+  '#94A3B8',
 ];
 
-export default function Analysis() {
+function AnalysisInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const job_id = searchParams.get('job_id');
   const { getToken } = useAuth();
-  const { job_id } = router.query;
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -69,9 +70,7 @@ export default function Analysis() {
       try {
         const token = await getToken();
         const response = await fetch(`${API_URL}/api/jobs/${jobId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (response.ok) {
@@ -91,26 +90,20 @@ export default function Analysis() {
       setFetchingLatest(true);
       try {
         const token = await getToken();
-        // First, get the list of jobs to find the latest completed one
         const response = await fetch(`${API_URL}/api/jobs`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (response.ok) {
           const data = await response.json();
           const jobs: JobListItem[] = data.jobs || [];
-          // Find the latest completed job
           const latestCompletedJob = jobs
             .filter(j => j.status === 'completed')
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
           if (latestCompletedJob) {
-            // Load the full job details
             await loadJob(latestCompletedJob.id);
-            // Update the URL to include the job_id without causing a page reload
-            router.replace(`/analysis?job_id=${latestCompletedJob.id}`, undefined, { shallow: true });
+            router.replace(`/analysis?job_id=${latestCompletedJob.id}`);
           } else {
             setLoading(false);
           }
@@ -126,13 +119,11 @@ export default function Analysis() {
     };
 
     if (job_id) {
-      loadJob(job_id as string);
-    } else if (router.isReady) {
-      // Router is ready but no job_id provided - fetch the latest analysis
+      loadJob(job_id);
+    } else {
       loadLatestJob();
     }
-  }, [job_id, router.isReady, getToken, router]);
-
+  }, [job_id, getToken, router]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -242,16 +233,10 @@ export default function Analysis() {
     );
   }
 
-
-  // Tab content renderers
   const renderOverview = () => {
     const report = job?.report_payload?.content;
     if (!report) {
-      return (
-        <div className="text-center py-12 text-gray-500">
-          No portfolio report available.
-        </div>
-      );
+      return <div className="text-center py-12 text-gray-500">No portfolio report available.</div>;
     }
 
     return (
@@ -291,59 +276,36 @@ export default function Analysis() {
   const renderCharts = () => {
     const chartsPayload = job?.charts_payload;
     if (!chartsPayload || Object.keys(chartsPayload).length === 0) {
-      return (
-        <div className="text-center py-12 text-gray-500">
-          No chart data available.
-        </div>
-      );
+      return <div className="text-center py-12 text-gray-500">No chart data available.</div>;
     }
 
-    // Helper function to format chart title from key
     const formatTitle = (key: string): string => {
-      return key
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+      return key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     };
 
-    // Helper function to determine chart type based on data structure or chart metadata
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getChartType = (chartData: any): 'pie' | 'donut' | 'bar' | 'horizontalBar' | 'line' => {
-      // If the charter agent specifies a type, use it directly if supported
       if (chartData.type) {
         const supportedTypes = ['pie', 'donut', 'bar', 'horizontalBar', 'line'];
-        if (supportedTypes.includes(chartData.type)) {
-          return chartData.type;
-        }
-        // Map variations to supported types
+        if (supportedTypes.includes(chartData.type)) return chartData.type;
         const typeMap: Record<string, 'pie' | 'donut' | 'bar' | 'horizontalBar' | 'line'> = {
           'column': 'bar',
           'area': 'line'
         };
-        if (typeMap[chartData.type]) {
-          return typeMap[chartData.type];
-        }
+        if (typeMap[chartData.type]) return typeMap[chartData.type];
       }
 
-      // Otherwise, make an intelligent guess based on the data
-      // If data has dates/time series, use line chart
       if (chartData.data?.[0]?.date || chartData.data?.[0]?.year) return 'line';
-
-      // If data represents parts of a whole (has percentages or small dataset), use pie
       if (chartData.data?.length <= 10 && chartData.data?.[0]?.value) return 'pie';
-
-      // Default to bar chart for other cases
       return 'bar';
     };
 
-    // Dynamically render all charts provided by the charter agent
     const chartEntries = Object.entries(chartsPayload);
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {chartEntries.map(([key, chartData]: [string, any]) => {
-          // Skip if no data
           if (!chartData?.data || chartData.data.length === 0) return null;
 
           const chartType = getChartType(chartData);
@@ -362,7 +324,7 @@ export default function Analysis() {
                       labelLine={false}
                       label
                       outerRadius={100}
-                      innerRadius={chartType === 'donut' ? 60 : 0}  // Donut has inner radius
+                      innerRadius={chartType === 'donut' ? 60 : 0}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -374,23 +336,10 @@ export default function Analysis() {
                     <Tooltip formatter={(value: number) => `$${value.toLocaleString('en-US')}`} />
                   </PieChart>
                 ) : chartType === 'horizontalBar' ? (
-                  // For horizontal bars, just use regular vertical bars with rotated labels
-                  // Recharts horizontal layout can be problematic
-                  <BarChart
-                    data={chartData.data}
-                    margin={{ left: 10, right: 30, top: 5, bottom: 60 }}
-                  >
+                  <BarChart data={chartData.data} margin={{ left: 10, right: 30, top: 5, bottom: 60 }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      textAnchor="end"
-                      interval={0}
-                      height={60}
-                    />
-                    <YAxis
-                      tickFormatter={(value) => `$${(value/1000).toFixed(0)}k`}
-                    />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} height={60} />
+                    <YAxis tickFormatter={(value) => `$${(value/1000).toFixed(0)}k`} />
                     <Tooltip formatter={(value: number) => `$${value.toLocaleString('en-US')}`} />
                     <Bar dataKey="value">
                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -408,7 +357,6 @@ export default function Analysis() {
                     <Bar dataKey="value" fill={chartData.color || COLORS[0]} />
                   </BarChart>
                 ) : (
-                  // Line chart for time series data
                   <LineChart data={chartData.data}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey={chartData.xKey || "year"} />
@@ -419,7 +367,6 @@ export default function Analysis() {
                 )}
               </ResponsiveContainer>
 
-              {/* Add legend for pie/donut charts with many items */}
               {(chartType === 'pie' || chartType === 'donut') && chartData.data.length > 6 && (
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -444,20 +391,12 @@ export default function Analysis() {
   const renderRetirement = () => {
     const retirement = job?.retirement_payload;
     if (!retirement) {
-      return (
-        <div className="text-center py-12 text-gray-500">
-          No retirement projection available.
-        </div>
-      );
+      return <div className="text-center py-12 text-gray-500">No retirement projection available.</div>;
     }
-
-    // Backend provides 'analysis' as markdown text
-    const retirementAnalysis = retirement.analysis;
 
     return (
       <div className="space-y-8">
-        {/* Analysis Section */}
-        {retirementAnalysis && (
+        {retirement.analysis && (
           <div className="bg-ai-accent/10 border border-ai-accent/20 rounded-lg p-6">
             <div className="prose prose-lg max-w-none">
               <ReactMarkdown
@@ -471,32 +410,25 @@ export default function Analysis() {
                   li: ({children}) => <li className="text-gray-700">{children}</li>,
                 }}
               >
-                {retirementAnalysis}
+                {retirement.analysis}
               </ReactMarkdown>
             </div>
           </div>
         )}
-
       </div>
     );
   };
 
   return (
     <>
-      <Head>
-        <title>Analysis - Alex AI Financial Advisor</title>
-      </Head>
       <Layout>
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="bg-white rounded-lg shadow px-8 py-6 mb-8">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-dark mb-2">Portfolio Analysis Results</h1>
-                <p className="text-gray-600">
-                  Completed on {formatDate(job.created_at)}
-                </p>
+                <p className="text-gray-600">Completed on {formatDate(job.created_at)}</p>
               </div>
               <button
                 onClick={() => router.push('/advisor-team')}
@@ -507,7 +439,6 @@ export default function Analysis() {
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="bg-white rounded-lg shadow mb-8">
             <div className="border-b border-gray-200">
               <nav className="flex -mb-px">
@@ -545,7 +476,6 @@ export default function Analysis() {
             </div>
           </div>
 
-          {/* Tab Content */}
           <div className="bg-white rounded-lg shadow px-8 py-6">
             {activeTab === 'overview' && renderOverview()}
             {activeTab === 'charts' && renderCharts()}
@@ -555,5 +485,13 @@ export default function Analysis() {
       </div>
       </Layout>
     </>
+  );
+}
+
+export default function AnalysisPage() {
+  return (
+    <Suspense>
+      <AnalysisInner />
+    </Suspense>
   );
 }

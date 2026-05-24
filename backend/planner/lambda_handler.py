@@ -157,7 +157,7 @@ if __name__ == "__main__":
     if not user:
         print(f"Creating test user: {test_user_id}")
         user_create = UserCreate(clerk_user_id=test_user_id, display_name="Test Planner User")
-        db.users.create(user_create.model_dump(), returning='clerk_user_id')
+        db.users.create_user(clerk_user_id=test_user_id, display_name="Test Planner User")
 
     # Create a test job
     print("Creating test job...")
@@ -170,8 +170,11 @@ if __name__ == "__main__":
         }
     )
     
-    job = db.jobs.create(job_create.model_dump())
-    job_id = job
+    job_id = db.jobs.create_job(
+        clerk_user_id=job_create.clerk_user_id,
+        job_type=job_create.job_type,
+        request_payload=job_create.request_payload,
+    )
     
     print(f"Created test job: {job_id}")
     

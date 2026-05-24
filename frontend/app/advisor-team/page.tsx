@@ -1,10 +1,11 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '@clerk/nextjs';
-import Layout from '../components/Layout';
-import { API_URL } from '../lib/config';
-import { emitAnalysisCompleted, emitAnalysisFailed, emitAnalysisStarted } from '../lib/events';
-import Head from 'next/head';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/clerk-react';
+import Layout from '@/components/Layout';
+import { API_URL } from '@/lib/config';
+import { emitAnalysisCompleted, emitAnalysisFailed, emitAnalysisStarted } from '@/lib/events';
 
 interface Agent {
   icon: string;
@@ -87,30 +88,21 @@ export default function AdvisorTeam() {
       try {
         const token = await getToken();
         const response = await fetch(`${API_URL}/api/jobs/${jobId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (response.ok) {
           const job = await response.json();
 
           if (job.status === 'completed') {
-            setProgress({
-              stage: 'complete',
-              message: 'Analysis complete!',
-              activeAgents: []
-            });
+            setProgress({ stage: 'complete', message: 'Analysis complete!', activeAgents: [] });
 
             if (pollInterval) {
               clearInterval(pollInterval);
               setPollInterval(null);
             }
 
-            // Emit completion event so other components can refresh
             emitAnalysisCompleted(jobId);
-
-            // Also refresh our own jobs list
             fetchJobs();
 
             setTimeout(() => {
@@ -129,9 +121,7 @@ export default function AdvisorTeam() {
               setPollInterval(null);
             }
 
-            // Emit failure event
             emitAnalysisFailed(jobId, job.error);
-
             setIsAnalyzing(false);
             setCurrentJobId(null);
           }
@@ -161,9 +151,7 @@ export default function AdvisorTeam() {
     try {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/jobs`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.ok) {
@@ -177,11 +165,7 @@ export default function AdvisorTeam() {
 
   const startAnalysis = async () => {
     setIsAnalyzing(true);
-    setProgress({
-      stage: 'starting',
-      message: 'Initializing analysis...',
-      activeAgents: []
-    });
+    setProgress({ stage: 'starting', message: 'Initializing analysis...', activeAgents: [] });
 
     try {
       const token = await getToken();
@@ -191,17 +175,12 @@ export default function AdvisorTeam() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          analysis_type: 'portfolio',
-          options: {}
-        })
+        body: JSON.stringify({ analysis_type: 'portfolio', options: {} })
       });
 
       if (response.ok) {
         const data = await response.json();
         setCurrentJobId(data.job_id);
-
-        // Emit start event
         emitAnalysisStarted(data.job_id);
 
         setProgress({
@@ -233,7 +212,6 @@ export default function AdvisorTeam() {
     }
   };
 
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
       month: 'short',
@@ -246,26 +224,17 @@ export default function AdvisorTeam() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'text-green-600';
-      case 'failed':
-        return 'text-red-500';
-      case 'running':
-        return 'text-blue-600';
-      default:
-        return 'text-gray-500';
+      case 'completed': return 'text-green-600';
+      case 'failed': return 'text-red-500';
+      case 'running': return 'text-blue-600';
+      default: return 'text-gray-500';
     }
   };
 
-  const isAgentActive = (agentName: string) => {
-    return progress.activeAgents.includes(agentName);
-  };
+  const isAgentActive = (agentName: string) => progress.activeAgents.includes(agentName);
 
   return (
     <>
-      <Head>
-        <title>Advisor Team - Alex AI Financial Advisor</title>
-      </Head>
       <Layout>
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -289,9 +258,7 @@ export default function AdvisorTeam() {
                 )}
                 <div className="relative">
                   <div className={`text-5xl mb-4 ${isAgentActive(agent.name) ? 'animate-strong-pulse' : ''}`}>{agent.icon}</div>
-                  <h3 className={`text-xl font-semibold mb-1 ${agent.color}`}>
-                    {agent.name}
-                  </h3>
+                  <h3 className={`text-xl font-semibold mb-1 ${agent.color}`}>{agent.name}</h3>
                   <p className="text-sm text-gray-500 mb-3">{agent.role}</p>
                   <p className="text-gray-600 text-sm">{agent.description}</p>
                   {isAgentActive(agent.name) && (
@@ -334,9 +301,7 @@ export default function AdvisorTeam() {
                   )}
                 </div>
 
-                <p className={`text-sm mb-4 ${
-                  progress.stage === 'error' ? 'text-red-600' : 'text-gray-600'
-                }`}>
+                <p className={`text-sm mb-4 ${progress.stage === 'error' ? 'text-red-600' : 'text-gray-600'}`}>
                   {progress.message}
                 </p>
 
@@ -388,9 +353,7 @@ export default function AdvisorTeam() {
                         <p className="text-sm font-medium text-gray-900">
                           Analysis #{job.id.slice(0, 8)}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {formatDate(job.created_at)}
-                        </p>
+                        <p className="text-xs text-gray-500">{formatDate(job.created_at)}</p>
                       </div>
                       <div className="flex items-center space-x-4">
                         <span className={`text-sm font-medium ${getStatusColor(job.status)}`}>

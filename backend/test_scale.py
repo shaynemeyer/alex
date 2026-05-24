@@ -48,20 +48,18 @@ async def create_test_user(user_num: int, num_accounts: int, num_positions: int)
     for i, symbol in enumerate(instruments):
         existing = db.instruments.find_by_symbol(symbol)
         if not existing:
-            db.instruments.create(
-                {
-                    "symbol": symbol,
-                    "name": f"Test ETF {symbol}",
-                    "instrument_type": "etf",
-                    "current_price": 100.0 + i * 50,
-                    "allocation_asset_class": (
-                        {"equity": 100.0} if i % 2 == 0 else {"fixed_income": 100.0}
-                    ),
-                    "allocation_regions": {"north_america": 100.0},
-                    "allocation_sectors": {"other": 100.0},
-                },
-                returning="symbol",
-            )
+            from database.src.schemas import InstrumentCreate
+            db.instruments.create_instrument(InstrumentCreate(
+                symbol=symbol,
+                name=f"Test ETF {symbol}",
+                instrument_type="etf",
+                current_price=100.0 + i * 50,
+                allocation_asset_class=(
+                    {"equity": 100.0} if i % 2 == 0 else {"fixed_income": 100.0}
+                ),
+                allocation_regions={"north_america": 100.0},
+                allocation_sectors={"other": 100.0},
+            ))
 
     account_ids = []
     total_positions = 0
@@ -97,7 +95,11 @@ async def create_test_user(user_num: int, num_accounts: int, num_positions: int)
         "status": "pending",
         "request_payload": {"test": f"scale_user_{user_num}"},
     }
-    job_id = db.jobs.create(job_data)
+    job_id = db.jobs.create_job(
+        clerk_user_id=job_data["clerk_user_id"],
+        job_type=job_data["job_type"],
+        request_payload=job_data["request_payload"],
+    )
 
     return {
         "user_id": test_user,
@@ -274,28 +276,16 @@ async def run_scale_test():
     for user in all_users:
         # Delete positions
         for account_id in user["account_ids"]:
-            db.execute_raw(
-                "DELETE FROM positions WHERE account_id = :account_id::uuid",
-                [{"name": "account_id", "value": {"stringValue": account_id}}],
-            )
+            db.client.table("positions").delete().eq("account_id", account_id).execute()
 
         # Delete accounts
-        db.execute_raw(
-            "DELETE FROM accounts WHERE clerk_user_id = :user_id",
-            [{"name": "user_id", "value": {"stringValue": user["user_id"]}}],
-        )
+        db.client.table("accounts").delete().eq("clerk_user_id", user["user_id"]).execute()
 
         # Delete jobs
-        db.execute_raw(
-            "DELETE FROM jobs WHERE clerk_user_id = :user_id",
-            [{"name": "user_id", "value": {"stringValue": user["user_id"]}}],
-        )
+        db.client.table("jobs").delete().eq("clerk_user_id", user["user_id"]).execute()
 
         # Delete user
-        db.execute_raw(
-            "DELETE FROM users WHERE clerk_user_id = :user_id",
-            [{"name": "user_id", "value": {"stringValue": user["user_id"]}}],
-        )
+        db.client.table("users").delete().eq("clerk_user_id", user["user_id"]).execute()
 
     print("Cleanup completed")
 

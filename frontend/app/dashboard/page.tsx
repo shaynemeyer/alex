@@ -1,11 +1,12 @@
-import { useUser, useAuth } from "@clerk/nextjs";
+'use client';
+
+import { useUser, useAuth } from "@clerk/clerk-react";
 import { useEffect, useState, useCallback } from "react";
-import { API_URL } from "../lib/config";
-import Layout from "../components/Layout";
+import { API_URL } from "@/lib/config";
+import Layout from "@/components/Layout";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { Skeleton, SkeletonCard } from "../components/Skeleton";
-import { showToast } from "../components/Toast";
-import Head from "next/head";
+import { Skeleton, SkeletonCard } from "@/components/Skeleton";
+import { showToast } from "@/components/Toast";
 
 interface UserData {
   clerk_user_id: string;
@@ -58,7 +59,6 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
 
-  // Form state for editable fields - start empty to avoid flicker
   const [displayName, setDisplayName] = useState("");
   const [yearsUntilRetirement, setYearsUntilRetirement] = useState(0);
   const [targetRetirementIncome, setTargetRetirementIncome] = useState(0);
@@ -67,7 +67,6 @@ export default function Dashboard() {
   const [northAmericaTarget, setNorthAmericaTarget] = useState(0);
   const [internationalTarget, setInternationalTarget] = useState(0);
 
-  // Calculate portfolio summary
   const calculatePortfolioSummary = useCallback(() => {
     let totalValue = 0;
     const assetClassBreakdown: Record<string, number> = {
@@ -77,14 +76,12 @@ export default function Dashboard() {
       cash: 0
     };
 
-    // Add cash balances
     accounts.forEach(account => {
       const cashBalance = Number(account.cash_balance);
       totalValue += cashBalance;
       assetClassBreakdown.cash += cashBalance;
     });
 
-    // Add position values
     Object.entries(positions).forEach(([, accountPositions]) => {
       accountPositions.forEach(position => {
         const instrument = instruments[position.symbol];
@@ -92,7 +89,6 @@ export default function Dashboard() {
           const positionValue = Number(position.quantity) * Number(instrument.current_price);
           totalValue += positionValue;
 
-          // Add to asset class breakdown
           if (instrument.asset_class_allocation) {
             Object.entries(instrument.asset_class_allocation).forEach(([assetClass, percentage]) => {
               assetClassBreakdown[assetClass] = (assetClassBreakdown[assetClass] || 0) + (positionValue * percentage / 100);
@@ -105,7 +101,6 @@ export default function Dashboard() {
     return { totalValue, assetClassBreakdown };
   }, [accounts, positions, instruments]);
 
-  // Load user data and accounts
   useEffect(() => {
     async function loadData() {
       if (!userLoaded || !user) return;
@@ -118,11 +113,8 @@ export default function Dashboard() {
           return;
         }
 
-        // Get/create user
         const userResponse = await fetch(`${API_URL}/api/user`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Authorization": `Bearer ${token}` },
         });
 
         if (!userResponse.ok) {
@@ -130,11 +122,10 @@ export default function Dashboard() {
         }
 
         const response = await userResponse.json();
-        const userData = response.user; // Extract user from response
+        const userData = response.user;
         setUserData(userData);
         setDisplayName(userData.display_name || "");
         setYearsUntilRetirement(userData.years_until_retirement || 0);
-        // Ensure target_retirement_income is a number
         const income = userData.target_retirement_income
           ? (typeof userData.target_retirement_income === 'string'
             ? parseFloat(userData.target_retirement_income)
@@ -146,40 +137,31 @@ export default function Dashboard() {
         setNorthAmericaTarget(userData.region_targets?.north_america || 0);
         setInternationalTarget(userData.region_targets?.international || 0);
 
-        // Get accounts
         const accountsResponse = await fetch(`${API_URL}/api/accounts`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Authorization": `Bearer ${token}` },
         });
 
         if (accountsResponse.ok) {
           const accountsData = await accountsResponse.json();
           setAccounts(accountsData);
 
-          // Get positions for each account
           const positionsMap: Record<string, Position[]> = {};
           const instrumentsMap: Record<string, Instrument> = {};
 
           for (const account of accountsData) {
-            // Skip if account has no ID
             if (!account.id) {
               console.warn('Account missing ID in dashboard:', account);
               continue;
             }
 
             const positionsResponse = await fetch(`${API_URL}/api/accounts/${account.id}/positions`, {
-              headers: {
-                "Authorization": `Bearer ${token}`,
-              },
+              headers: { "Authorization": `Bearer ${token}` },
             });
 
             if (positionsResponse.ok) {
               const positionsData = await positionsResponse.json();
-              // API returns positions in a positions key
               positionsMap[account.id] = positionsData.positions || [];
 
-              // Store instrument data from each position
               for (const position of positionsData.positions || []) {
                 if (position.instrument) {
                   instrumentsMap[position.symbol] = position.instrument as Instrument;
@@ -192,11 +174,8 @@ export default function Dashboard() {
           setInstruments(instrumentsMap);
         }
 
-        // Get last analysis date from jobs endpoint
         const jobsResponse = await fetch(`${API_URL}/api/jobs`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Authorization": `Bearer ${token}` },
         });
 
         if (jobsResponse.ok) {
@@ -220,7 +199,6 @@ export default function Dashboard() {
     loadData();
   }, [userLoaded, user, getToken]);
 
-  // Listen for analysis completion events to refresh data
   useEffect(() => {
     if (!userLoaded || !user) return;
 
@@ -231,36 +209,27 @@ export default function Dashboard() {
 
         console.log('Analysis completed - refreshing dashboard data...');
 
-        // Refresh accounts to get latest prices
         const accountsResponse = await fetch(`${API_URL}/api/accounts`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Authorization": `Bearer ${token}` },
         });
 
         if (accountsResponse.ok) {
           const accountsData = await accountsResponse.json();
           setAccounts(accountsData.accounts || []);
 
-          // Load positions for each account
           const positionsData: Record<string, Position[]> = {};
           const instrumentsData: Record<string, Instrument> = {};
 
           for (const account of accountsData.accounts || []) {
             const positionsResponse = await fetch(
               `${API_URL}/api/accounts/${account.id}/positions`,
-              {
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                },
-              }
+              { headers: { "Authorization": `Bearer ${token}` } }
             );
 
             if (positionsResponse.ok) {
               const data = await positionsResponse.json();
               positionsData[account.id] = data.positions || [];
 
-              // Extract instruments from positions
               for (const position of data.positions || []) {
                 if (position.instrument) {
                   instrumentsData[position.symbol] = position.instrument;
@@ -271,27 +240,19 @@ export default function Dashboard() {
 
           setPositions(positionsData);
           setInstruments(instrumentsData);
-
-          // Portfolio will be recalculated on render
         }
       } catch (err) {
         console.error("Error refreshing dashboard data:", err);
       }
     };
 
-    // Listen for the completion event
     window.addEventListener('analysis:completed', handleAnalysisCompleted);
-
-    return () => {
-      window.removeEventListener('analysis:completed', handleAnalysisCompleted);
-    };
+    return () => window.removeEventListener('analysis:completed', handleAnalysisCompleted);
   }, [userLoaded, user, getToken, calculatePortfolioSummary]);
 
-  // Save user settings
   const handleSaveSettings = async () => {
     if (!userData) return;
 
-    // Input validation
     if (!displayName || displayName.trim().length === 0) {
       showToast('error', 'Display name is required');
       return;
@@ -307,7 +268,6 @@ export default function Dashboard() {
       return;
     }
 
-    // Validate allocation percentages
     const equityFixed = equityTarget + fixedIncomeTarget;
     if (Math.abs(equityFixed - 100) > 0.01) {
       showToast('error', 'Equity and Fixed Income must sum to 100%');
@@ -331,14 +291,8 @@ export default function Dashboard() {
         display_name: displayName.trim(),
         years_until_retirement: yearsUntilRetirement,
         target_retirement_income: targetRetirementIncome,
-        asset_class_targets: {
-          equity: equityTarget,
-          fixed_income: fixedIncomeTarget
-        },
-        region_targets: {
-          north_america: northAmericaTarget,
-          international: internationalTarget
-        }
+        asset_class_targets: { equity: equityTarget, fixed_income: fixedIncomeTarget },
+        region_targets: { north_america: northAmericaTarget, international: internationalTarget }
       };
 
       const response = await fetch(`${API_URL}/api/user`, {
@@ -356,8 +310,6 @@ export default function Dashboard() {
 
       const updatedUser = await response.json();
       setUserData(updatedUser);
-
-      // Show success toast
       showToast('success', 'Settings saved successfully!');
 
     } catch (err) {
@@ -370,7 +322,6 @@ export default function Dashboard() {
 
   const { totalValue, assetClassBreakdown } = calculatePortfolioSummary();
 
-  // Prepare data for pie chart
   const pieChartData = Object.entries(assetClassBreakdown)
     .filter(([, value]) => value > 0)
     .map(([key, value]) => ({
@@ -383,15 +334,11 @@ export default function Dashboard() {
 
   return (
     <>
-      <Head>
-        <title>Dashboard - Alex AI Financial Advisor</title>
-      </Head>
       <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-dark mb-8">Dashboard</h1>
 
         {loading ? (
-          // Loading skeleton
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -406,7 +353,6 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            {/* Portfolio Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6 text-center">
             <h3 className="text-sm font-medium text-gray-500 mb-3">Total Portfolio Value</h3>
@@ -458,7 +404,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* User Settings Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h2 className="text-xl font-semibold text-dark mb-6">User Settings</h2>
 
@@ -475,7 +420,6 @@ export default function Dashboard() {
           ) : null}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Basic Info */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Display Name
@@ -496,7 +440,6 @@ export default function Dashboard() {
                 type="text"
                 value={targetRetirementIncome ? targetRetirementIncome.toLocaleString('en-US') : ''}
                 onChange={(e) => {
-                  // Remove commas and parse as number
                   const value = e.target.value.replace(/,/g, '');
                   const num = parseInt(value) || 0;
                   if (!isNaN(num)) {
@@ -507,7 +450,6 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Retirement Slider */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Years Until Retirement: {yearsUntilRetirement}
@@ -530,7 +472,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Target Allocations */}
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-3">Target Asset Class Allocation</h3>
               <div className="space-y-3">
@@ -566,7 +507,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Mini pie chart for asset allocation */}
               <div className="mt-4 h-32">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -625,7 +565,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Mini pie chart for regional allocation */}
               <div className="mt-4 h-32">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>

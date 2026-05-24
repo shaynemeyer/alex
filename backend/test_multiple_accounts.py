@@ -53,20 +53,18 @@ def test_multiple_accounts():
     for i, symbol in enumerate(instruments):
         existing = db.instruments.find_by_symbol(symbol)
         if not existing:
-            db.instruments.create(
-                {
-                    "symbol": symbol,
-                    "name": f"Test ETF {symbol}",
-                    "instrument_type": "etf",
-                    "current_price": 100.0 + i * 50,
-                    "allocation_asset_class": (
-                        {"equity": 100.0} if i % 2 == 0 else {"fixed_income": 100.0}
-                    ),
-                    "allocation_regions": {"north_america": 100.0},
-                    "allocation_sectors": {"other": 100.0},
-                },
-                returning="symbol",
-            )
+            from database.src.schemas import InstrumentCreate
+            db.instruments.create_instrument(InstrumentCreate(
+                symbol=symbol,
+                name=f"Test ETF {symbol}",
+                instrument_type="etf",
+                current_price=100.0 + i * 50,
+                allocation_asset_class=(
+                    {"equity": 100.0} if i % 2 == 0 else {"fixed_income": 100.0}
+                ),
+                allocation_regions={"north_america": 100.0},
+                allocation_sectors={"other": 100.0},
+            ))
             print(f"✅ Created instrument: {symbol}")
     # Create multiple accounts with different portfolios
     accounts = []

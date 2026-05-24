@@ -1,6 +1,8 @@
-import { useUser, UserButton, Protect } from "@clerk/nextjs";
+'use client';
+
+import { useUser, UserButton, Protect } from "@clerk/clerk-react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 import PageTransition from "./PageTransition";
 
@@ -10,10 +12,9 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { user } = useUser();
-  const router = useRouter();
+  const pathname = usePathname();
 
-  // Helper to determine if a link is active
-  const isActive = (path: string) => router.pathname === path;
+  const isActive = (path: string) => pathname === path;
 
   return (
     <Protect fallback={

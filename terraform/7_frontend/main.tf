@@ -169,7 +169,7 @@ resource "aws_lambda_function" "api" {
     variables = {
       # Database configuration (Supabase)
       SUPABASE_URL         = var.supabase_url
-      SUPABASE_SERVICE_KEY = var.supabase_service_role_key
+      SUPABASE_SERVICE_KEY = var.supabase_service_key
       DEFAULT_AWS_REGION   = var.aws_region
 
       # SQS configuration from Part 6

@@ -1,9 +1,11 @@
-import { useAuth } from "@clerk/nextjs";
+'use client';
+
+import { useAuth } from "@clerk/clerk-react";
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/router";
-import Layout from "../../components/Layout";
-import ConfirmModal from "../../components/ConfirmModal";
-import { API_URL } from "../../lib/config";
+import { useRouter } from "next/navigation";
+import Layout from "@/components/Layout";
+import ConfirmModal from "@/components/ConfirmModal";
+import { API_URL } from "@/lib/config";
 
 interface Instrument {
   symbol: string;
@@ -27,10 +29,9 @@ interface Account {
   positions?: Position[];
 }
 
-export default function AccountDetail() {
+export default function AccountDetail({ id }: { id: string }) {
   const { getToken } = useAuth();
   const router = useRouter();
-  const { id } = router.query;
   const [account, setAccount] = useState<Account | null>(null);
   const [positions, setPositions] = useState<Position[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
@@ -57,11 +58,8 @@ export default function AccountDetail() {
     try {
       const token = await getToken();
 
-      // Load account details
       const accountResponse = await fetch(`${API_URL}/api/accounts`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (accountResponse.ok) {
@@ -82,14 +80,9 @@ export default function AccountDetail() {
         }
       }
 
-      // Load positions
       const positionsResponse = await fetch(
         `${API_URL}/api/accounts/${id}/positions`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
       if (positionsResponse.ok) {
@@ -97,14 +90,9 @@ export default function AccountDetail() {
         setPositions(data.positions || []);
       }
 
-      // Load instruments for autocomplete
       const instrumentsResponse = await fetch(
         `${API_URL}/api/instruments`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
       if (instrumentsResponse.ok) {
@@ -177,9 +165,7 @@ export default function AccountDetail() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          quantity: quantity,
-        }),
+        body: JSON.stringify({ quantity }),
       });
 
       if (response.ok) {
@@ -205,9 +191,7 @@ export default function AccountDetail() {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/positions/${positionId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (response.ok) {
@@ -250,7 +234,7 @@ export default function AccountDetail() {
         body: JSON.stringify({
           account_id: id,
           symbol: newPosition.symbol.toUpperCase(),
-          quantity: quantity,
+          quantity,
         }),
       });
 
@@ -321,7 +305,6 @@ export default function AccountDetail() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Breadcrumb */}
         <div className="mb-4">
           <button
             onClick={() => router.push('/accounts')}
@@ -334,16 +317,13 @@ export default function AccountDetail() {
           </button>
         </div>
 
-        {/* Account Details */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex justify-between items-start mb-6">
             <div className="flex-1">
               {editingAccount ? (
                 <div className="space-y-4 max-w-md">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Account Name
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
                     <input
                       type="text"
                       value={editedAccount.name}
@@ -352,9 +332,7 @@ export default function AccountDetail() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Account Purpose
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Account Purpose</label>
                     <input
                       type="text"
                       value={editedAccount.purpose}
@@ -363,9 +341,7 @@ export default function AccountDetail() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Cash Balance
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cash Balance</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
                       <input
@@ -429,7 +405,6 @@ export default function AccountDetail() {
             </div>
           )}
 
-          {/* Account Summary */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
             <div>
               <p className="text-sm text-gray-600">Cash Balance</p>
@@ -456,7 +431,6 @@ export default function AccountDetail() {
           </div>
         </div>
 
-        {/* Positions */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold text-dark">Positions</h3>
@@ -527,10 +501,7 @@ export default function AccountDetail() {
                                 </svg>
                               </button>
                               <button
-                                onClick={() => {
-                                  setEditingPosition(null);
-                                  setEditedQuantity('');
-                                }}
+                                onClick={() => { setEditingPosition(null); setEditedQuantity(''); }}
                                 className="text-gray-600 hover:bg-gray-100 p-2 rounded transition-colors"
                                 title="Cancel"
                               >
@@ -544,7 +515,6 @@ export default function AccountDetail() {
                               <button
                                 onClick={() => {
                                   setEditingPosition(position.id);
-                                  // Format quantity to remove unnecessary decimal places
                                   const qty = Number(position.quantity);
                                   setEditedQuantity(qty % 1 === 0 ? qty.toString() : qty.toFixed(2));
                                 }}
@@ -556,11 +526,7 @@ export default function AccountDetail() {
                                 </svg>
                               </button>
                               <button
-                                onClick={() => setConfirmModal({
-                                  isOpen: true,
-                                  positionId: position.id,
-                                  symbol: position.symbol
-                                })}
+                                onClick={() => setConfirmModal({ isOpen: true, positionId: position.id, symbol: position.symbol })}
                                 disabled={saving}
                                 className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors disabled:opacity-50"
                                 title="Delete"
@@ -581,7 +547,6 @@ export default function AccountDetail() {
           )}
         </div>
 
-        {/* Add Position Modal */}
         {showAddPosition && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-md w-full p-6">
@@ -589,9 +554,7 @@ export default function AccountDetail() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Symbol *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Symbol *</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -632,9 +595,7 @@ export default function AccountDetail() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
                   <input
                     type="number"
                     value={newPosition.quantity}
@@ -678,7 +639,6 @@ export default function AccountDetail() {
           </div>
         )}
 
-        {/* Delete Position Confirmation Modal */}
         <ConfirmModal
           isOpen={confirmModal.isOpen}
           title="Delete Position"
